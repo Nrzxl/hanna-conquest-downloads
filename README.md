@@ -32,16 +32,16 @@ cd hanna-conquest-downloads
 .\scripts\configurar_build_hanna.ps1
 ```
 
-**Validação da etapa 2/6 — Hall das Conquistas (sem keystore):** em **Actions → HANNA Android - Public Build → Run workflow**, escolha `source_ref = feat/mobile-0.4.5-achievement-hall` e `publish = false`. Isso executa `flutter analyze` e `flutter test` no PR #14 **sem exigir chave de assinatura, gerar APK ou alterar o aplicativo instalado**. Somente o acesso de leitura ao repositório privado precisa estar configurado.
+**Validação das etapas 1–3/6 — Rota do 100%, Hall e Início inteligente:** os PRs #13, #14 e #15 foram integrados à `main` privada, com validações públicas aprovadas. O código está na versão **0.4.6**; o APK público permanece na **0.4.3** enquanto não for recuperado o `.jks` original. Para repetir a análise e os testes sem assinatura, escolha `source_ref = main` e `publish = false`. Esse modo **não gera APK**.
 
 **Publicação após o PR ser aprovado e integrado à main privada:** execute novamente com `source_ref = main` e `publish = true`, após configurar a chave original `.jks` e suas senhas. O workflow compila o APK assinado, usa número de build superior ao manifesto, compara a assinatura com o APK anterior e publica Release + `update.json`.
 
 Também é possível disparar os dois comandos pelo GitHub CLI:
 
 ```powershell
-gh workflow run hanna-public-apk.yml -R Nrzxl/hanna-conquest-downloads -f source_ref=feat/mobile-0.4.5-achievement-hall -F publish=false
+gh workflow run hanna-public-apk.yml -R Nrzxl/hanna-conquest-downloads -f source_ref=main -F publish=false
 
-# Somente após CI verde e merge do PR:
+# Somente após a recuperacao do .jks original, com a main testada:
 gh workflow run hanna-public-apk.yml -R Nrzxl/hanna-conquest-downloads -f source_ref=main -F publish=true
 ```
 
