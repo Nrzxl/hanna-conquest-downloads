@@ -2,21 +2,17 @@ name: HANNA Android - Public Build
 
 # Explicit, owner-only builds. Private Flutter source is never mirrored here.
 # The only published artifact is the signed Android APK.
-# Validation checkpoint: HANNA 0.4.8 PR #17, final source commit 6102525.
 on:
-  push:
-    branches: [main]
-    paths: ['.github/workflows/hanna-public-apk.yml']
   workflow_dispatch:
     inputs:
       source_ref:
         description: Private HANNA source branch to validate
         required: true
         type: choice
-        default: feat/mobile-0.4.8-retro-premium
+        default: main
         options:
-          - feat/mobile-0.4.8-retro-premium
           - main
+          - feat/mobile-0.4.8-retro-premium
           - feat/mobile-0.4.7-steam-wishlist-retro-store
           - feat/mobile-0.4.6-smart-home
           - feat/mobile-0.4.5-achievement-hall
@@ -47,7 +43,7 @@ jobs:
       - name: Check owner, publish branch and private-source access
         env:
           SOURCE_TOKEN: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
-          SOURCE_REF: ${{ inputs.source_ref || 'feat/mobile-0.4.8-retro-premium' }}
+          SOURCE_REF: ${{ inputs.source_ref }}
           SHOULD_PUBLISH: ${{ inputs.publish }}
         shell: bash
         run: |
@@ -65,7 +61,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: Nrzxl/hanna-conquest-mobile
-          ref: ${{ inputs.source_ref || 'feat/mobile-0.4.8-retro-premium' }}
+          ref: ${{ inputs.source_ref }}
           token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
           persist-credentials: false
           path: source
