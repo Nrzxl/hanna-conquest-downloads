@@ -9,7 +9,7 @@ on:
         description: Private HANNA source branch to validate
         required: true
         type: choice
-        default: feat/mobile-0.4.4-conquest-route
+        default: feat/mobile-0.4.5-achievement-hall
         options:
           - feat/mobile-0.4.5-achievement-hall
           - feat/mobile-0.4.4-conquest-route
