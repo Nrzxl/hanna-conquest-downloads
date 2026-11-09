@@ -53,9 +53,19 @@ Write-Host 'O token deve ser fine-grained e ter apenas Contents: Read'
 Write-Host 'no repositorio Nrzxl/hanna-conquest-mobile (privado).'
 Write-Host ''
 
-$token = Read-Hidden 'Token fine-grained de leitura do repositorio privado'
-Set-Secret -Name 'HANNA_SOURCE_READ_TOKEN' -Value $token
-$token = $null
+# The user may already have finished this first step at the office.
+# Never ask them to recreate a PAT when its secret name already exists.
+$existing = & gh secret list --repo $repo
+if ($LASTEXITCODE -ne 0) {
+    throw 'Nao foi possivel conferir os segredos ja configurados.'
+}
+if ($existing -match '^HANNA_SOURCE_READ_TOKEN\s') {
+    Write-Host 'Token de leitura ja configurado no GitHub. Preservando o segredo existente.'
+} else {
+    $token = Read-Hidden 'Token fine-grained de leitura do repositorio privado'
+    Set-Secret -Name 'HANNA_SOURCE_READ_TOKEN' -Value $token
+    $token = $null
+}
 
 Write-Host ''
 Write-Host 'Selecione o .jks ORIGINAL que assinou a HANNA 0.4.3.'
