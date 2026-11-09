@@ -2,7 +2,7 @@ name: HANNA Android - Public Build
 
 # Explicit, owner-only builds. Private Flutter source is never mirrored here.
 # The only published artifact is the signed Android APK.
-# Validation checkpoint: HANNA 0.4.8 PR #17, corrected 100% ordering assertions.
+# Validation checkpoint: HANNA 0.4.8 PR #17, final source commit 6102525.
 on:
   push:
     branches: [main]
