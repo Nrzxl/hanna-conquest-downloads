@@ -1,0 +1,193 @@
+name: HANNA Mobile 0.4.9 - APK de Homologacao
+
+# An independent, temporary-signed APK for testing the full 0.4.9 source.
+# NEVER replaces the installed official HANNA or updates update.json.
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/hanna-test-apk.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hanna-side-by-side-validation-apk
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: ${{ github.actor == 'Nrzxl' }}
+    name: Validate + build isolated 0.4.9 Android APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+
+    steps:
+      - name: Verify access to private source
+        env:
+          SOURCE_TOKEN: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$SOURCE_TOKEN" ]]; then
+            echo "::error::HANNA_SOURCE_READ_TOKEN is required (private source read-only)."
+            exit 1
+          fi
+
+      - name: Checkout private HANNA Mobile source (read-only)
+        uses: actions/checkout@v4
+        with:
+          repository: Nrzxl/hanna-conquest-mobile
+          ref: main
+          token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
+          persist-credentials: false
+          path: source
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Flutter 3.47.9
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.9'
+          cache: true
+
+      - name: Check cumulative source and pinned version
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '^version: 0.4.9+34$' source/pubspec.yaml
+          echo "HANNA cumulative source: $(git -C source rev-parse --short HEAD)"
+          echo "A validation build must not modify the official Android package ID."
+
+      - name: Resolve dependencies
+        working-directory: source
+        run: flutter pub get
+
+      - name: Flutter Analyze
+        working-directory: source
+        run: flutter analyze
+
+      - name: Run all Flutter regression tests
+        working-directory: source
+        run: flutter test
+
+      - name: Isolate Android package and disable update prompt
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          gradle_path = Path("source/android/app/build.gradle.kts")
+          original = gradle_path.read_text(encoding="utf-8")
+          needle = "        release {\n"
+          if original.count(needle) != 1:
+              raise SystemExit("Release buildType was not found uniquely: stop.")
+          replacement = (
+              needle +
+              '            applicationIdSuffix = ".validation"\n' +
+              '            versionNameSuffix = "-TESTE"\n'
+          )
+          gradle_path.write_text(
+              original.replace(needle, replacement, 1), encoding="utf-8"
+          )
+
+          manifest = Path("source/android/app/src/main/AndroidManifest.xml")
+          source = manifest.read_text(encoding="utf-8")
+          expected = 'android:label="HANNA conquest"'
+          if source.count(expected) != 1:
+              raise SystemExit("Official application label changed: stop.")
+          manifest.write_text(source.replace(
+              expected, 'android:label="HANNA conquest TESTE"', 1
+          ), encoding="utf-8")
+
+          print("Validation-only Android suffix: .validation")
+          print("No source commit changed; edits exist only in this runner.")
+          PY
+
+      - name: Build isolated cumulative 0.4.9 APK
+        working-directory: source
+        env:
+          # Never load original signing secrets for this side-by-side APK.
+          HANNA_KEYSTORE_PATH: ''
+          HANNA_KEY_ALIAS: ''
+          HANNA_KEY_PASSWORD: ''
+          HANNA_STORE_PASSWORD: ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter build apk --release \
+            --build-name=0.4.9 --build-number=34 \
+            --dart-define=HANNA_BUILD_VERSION=0.4.9 \
+            --dart-define=HANNA_BUILD_NUMBER=34 \
+            --dart-define=HANNA_UPDATE_MANIFEST_URL=
+          test -s build/app/outputs/flutter-apk/app-release.apk
+          cp build/app/outputs/flutter-apk/app-release.apk \
+            "$RUNNER_TEMP/HANNA-conquest-0.4.9-VALIDACAO.apk"
+          test -s "$RUNNER_TEMP/HANNA-conquest-0.4.9-VALIDACAO.apk"
+
+      - name: Verify install isolation and test signature
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="$RUNNER_TEMP/HANNA-conquest-0.4.9-VALIDACAO.apk"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name aapt | sort -V | tail -n 1)"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name apksigner | sort -V | tail -n 1)"
+          test -x "$AAPT"
+          test -x "$APKSIGNER"
+          "$APKSIGNER" verify --print-certs "$APK"
+          "$AAPT" dump badging "$APK" | head -n 10
+          PACKAGE="$("$AAPT" dump badging "$APK" | sed -nE "s/^package: name='([^']+)'.*/\1/p" | head -n 1)"
+          LABEL="$("$AAPT" dump badging "$APK" | sed -nE "s/^application-label:'([^']+)'.*/\1/p" | head -n 1)"
+          if [[ "$PACKAGE" != "com.example.hanna_conquest_app.validation" ]]; then
+            echo "::error::APK package does not have the validation suffix; upload blocked."
+            exit 1
+          fi
+          if [[ "$LABEL" != "HANNA conquest TESTE" ]]; then
+            echo "::error::Validation app label missing; upload blocked."
+            exit 1
+          fi
+          echo "Confirmed safe independent Android package: $PACKAGE"
+          sha256sum "$APK" | tee "$RUNNER_TEMP/HANNA-conquest-0.4.9-VALIDACAO.sha256"
+          cat > "$RUNNER_TEMP/LEIA-PRIMEIRO.txt" <<'EOF'
+          HANNA conquest Mobile 0.4.9 - APK DE VALIDACAO
+          Codigo: 0.4.9+34 (etapas 1 a 6, cumulativo)
+          Pacote: com.example.hanna_conquest_app.validation
+          Nome Android: HANNA conquest TESTE
+
+          Esta versao instala AO LADO do aplicativo oficial.
+          Ela usa assinatura temporaria de teste. NAO atualiza a HANNA 0.4.3.
+          Ela possui armazenamento separado: reconecte Steam e RetroAchievements
+          manualmente, sem enviar senhas, tokens ou chaves pelo chat.
+          O atualizador automatico da HANNA fica desligado neste APK de teste.
+          Nao use este APK para restaurar dados ou substituir a versao oficial.
+          Para atualizar a HANNA oficial sem desinstalar e necessario o .jks
+          original que assinou o APK 0.4.3.
+          EOF
+
+      - name: Upload validation APK only (14-day GitHub Actions artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: HANNA-0.4.9-VALIDACAO-Android
+          retention-days: 14
+          if-no-files-found: error
+          compression-level: 0
+          path: |
+            ${{ runner.temp }}/HANNA-conquest-0.4.9-VALIDACAO.apk
+            ${{ runner.temp }}/HANNA-conquest-0.4.9-VALIDACAO.sha256
+            ${{ runner.temp }}/LEIA-PRIMEIRO.txt
+
+      - name: Confirm no changes to the official feed
+        shell: bash
+        run: |
+          echo "The official APK, release signing key and update.json were not accessed or modified."
+          echo "Download the validation APK in the GitHub Actions artifact section."
