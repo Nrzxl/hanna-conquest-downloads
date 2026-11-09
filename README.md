@@ -26,13 +26,14 @@ O workflow [HANNA Android — Public Build](.github/workflows/hanna-public-apk.y
 Alternativamente, use no Windows PowerShell 5.1 o assistente [scripts/configurar_build_hanna.ps1](scripts/configurar_build_hanna.ps1), após clonar este repositório com o GitHub CLI. Ele pede as credenciais localmente e envia diretamente como segredos do GitHub; não grava nem mostra seus valores.
 
 ```powershell
-gh auth login
+Set-Location $env:USERPROFILE
+# Execute gh auth login apenas se ainda não estiver autenticado.
 gh repo clone Nrzxl/hanna-conquest-downloads
-cd hanna-conquest-downloads
+Set-Location .\hanna-conquest-downloads
 .\scripts\configurar_build_hanna.ps1
 ```
 
-**Validação das etapas 1–4/6 — Rota do 100%, Hall, Início inteligente e Loja Steam/retro:** os PRs #13–#16 foram integrados à `main` privada, com validações públicas aprovadas. O código está na versão **0.4.7**; o APK público permanece na **0.4.3** enquanto não for recuperado o `.jks` original. Para repetir a análise e os testes sem assinatura, escolha `source_ref = main` e `publish = false`. Esse modo **não gera APK**. A wishlist funciona quando o acesso público é permitido pela Steam e a classificação de promoções considera só preços BRL realmente verificados; a vitrine retro salva objetivos, sem registrar compras ou conceder conquistas.
+**Validação das etapas 1–5/6 — Rota do 100%, Hall, Início inteligente, Loja Steam/retro e Coleção Retro Premium:** os PRs #13–#17 foram integrados à `main` privada, com validações públicas aprovadas. O código está na versão **0.4.8**; o APK público permanece na **0.4.3** enquanto não for recuperado o `.jks` original. Para repetir a análise e os testes sem assinatura, escolha `source_ref = main` e `publish = false`. Esse modo **não gera APK**. A wishlist funciona quando o acesso público é permitido pela Steam e a classificação de promoções considera só preços BRL realmente verificados; a vitrine retro salva objetivos, sem registrar compras ou conceder conquistas.
 
 **Publicação após o PR ser aprovado e integrado à main privada:** execute novamente com `source_ref = main` e `publish = true`, após configurar a chave original `.jks` e suas senhas. O workflow compila o APK assinado, usa número de build superior ao manifesto, compara a assinatura com o APK anterior e publica Release + `update.json`.
 
