@@ -32,9 +32,9 @@ cd hanna-conquest-downloads
 .\scripts\configurar_build_hanna.ps1
 ```
 
-**Validação da etapa 1/6 — Rota do 100%:** em **Actions → HANNA Android - Public Build → Run workflow**, escolha `source_ref = feat/mobile-0.4.4-conquest-route` e `publish = false`. Isso verifica o PR #13 e compila o APK assinado **sem alterar o aplicativo instalado**.
+**Validação da etapa 1/6 — Rota do 100% (sem keystore):** em **Actions → HANNA Android - Public Build → Run workflow**, escolha `source_ref = feat/mobile-0.4.4-conquest-route` e `publish = false`. Isso executa `flutter analyze` e `flutter test` no PR #13 **sem exigir chave de assinatura, gerar APK ou alterar o aplicativo instalado**. Somente o acesso de leitura ao repositório privado precisa estar configurado.
 
-**Publicação após o PR ser aprovado e integrado à main privada:** execute novamente com `source_ref = main` e `publish = true`. O workflow usa o número de build superior ao manifesto, compara a assinatura com o APK anterior e publica Release + `update.json`.
+**Publicação após o PR ser aprovado e integrado à main privada:** execute novamente com `source_ref = main` e `publish = true`, após configurar a chave original `.jks` e suas senhas. O workflow compila o APK assinado, usa número de build superior ao manifesto, compara a assinatura com o APK anterior e publica Release + `update.json`.
 
 Também é possível disparar os dois comandos pelo GitHub CLI:
 
