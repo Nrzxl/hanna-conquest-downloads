@@ -153,6 +153,28 @@ jobs:
           sha256sum "$RUNNER_TEMP/HANNA-conquest.apk" | cut -d ' ' -f 1
           echo "Android APK built successfully. Private source and keystore are never uploaded."
 
+      - name: Verify original signing certificate against public 0.4.3
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          REPO="$GITHUB_REPOSITORY"
+          CURRENT_FEED="$(gh api "repos/$REPO/contents/update.json" --jq .content | base64 --decode)"
+          OLD_URL="$(printf '%s' "$CURRENT_FEED" | python3 -c 'import json,sys; print(json.load(sys.stdin)["apk_url"])')"
+          OLD_SHA="$(printf '%s' "$CURRENT_FEED" | python3 -c 'import json,sys; print(json.load(sys.stdin)["sha256"])')"
+          curl -fL --retry 2 --max-time 180 "$OLD_URL" -o "$RUNNER_TEMP/hanna-previous.apk"
+          printf '%s  %s\n' "$OLD_SHA" "$RUNNER_TEMP/hanna-previous.apk" | sha256sum --check --status
+          APK_SIGNER="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name apksigner | sort -V | tail -n 1)"
+          test -x "$APK_SIGNER"
+          OLD_CERT="$("$APK_SIGNER" verify --print-certs "$RUNNER_TEMP/hanna-previous.apk" | sed -nE 's/^Signer #1 certificate SHA-256 digest: ([0-9a-fA-F]+)$/\1/p' | head -n 1)"
+          NEW_CERT="$("$APK_SIGNER" verify --print-certs "$RUNNER_TEMP/HANNA-conquest.apk" | sed -nE 's/^Signer #1 certificate SHA-256 digest: ([0-9a-fA-F]+)$/\1/p' | head -n 1)"
+          if [[ -z "$OLD_CERT" || -z "$NEW_CERT" || "$OLD_CERT" != "$NEW_CERT" ]]; then
+            echo "::error::APK signature mismatch. An in-place update would fail. Original signing keystore is required."
+            exit 1
+          fi
+          echo "Verified APK signature matches current HANNA release; upgrade remains installable."
+
       - name: Publish signed APK and manifest to public HANNA releases
         if: ${{ inputs.publish && inputs.source_ref == 'main' }}
         env:
@@ -165,10 +187,14 @@ jobs:
           test -s "$APK"
           test "$REPO" = "Nrzxl/hanna-conquest-downloads"
           SHA256="$(sha256sum "$APK" | cut -d ' ' -f 1)"
-          gh release create "$HANNA_RELEASE_TAG" "$APK" \
-            --repo "$REPO" \
-            --title "HANNA conquest Mobile $HANNA_BUILD_VERSION (build $HANNA_BUILD_NUMBER)" \
-            --notes "HANNA conquest Mobile $HANNA_BUILD_VERSION. Signed APK only; source remains private."
+          if gh release view "$HANNA_RELEASE_TAG" --repo "$REPO" >/dev/null 2>&1; then
+            gh release upload "$HANNA_RELEASE_TAG" "$APK" --repo "$REPO" --clobber
+          else
+            gh release create "$HANNA_RELEASE_TAG" "$APK" \
+              --repo "$REPO" \
+              --title "HANNA conquest Mobile $HANNA_BUILD_VERSION (build $HANNA_BUILD_NUMBER)" \
+              --notes "HANNA conquest Mobile $HANNA_BUILD_VERSION. Signed APK only; source remains private."
+          fi
 
           # Re-read the feed just before publishing. Never downgrade or
           # advertise a missing asset. Old versions stay available.
