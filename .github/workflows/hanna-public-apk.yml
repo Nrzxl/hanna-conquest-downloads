@@ -11,6 +11,7 @@ on:
         type: choice
         default: feat/mobile-0.4.4-conquest-route
         options:
+          - feat/mobile-0.4.5-achievement-hall
           - feat/mobile-0.4.4-conquest-route
           - main
       publish:
