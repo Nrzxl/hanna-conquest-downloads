@@ -28,7 +28,7 @@ concurrency:
 
 jobs:
   build:
-    name: Validate, sign and optionally publish the HANNA APK
+    name: Validate HANNA source and optionally build signed APK
     if: ${{ github.actor == 'Nrzxl' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -101,6 +101,7 @@ jobs:
           echo "Next version: $VERSION, build $NUMBER (published build: $CURRENT_BUILD)."
 
       - name: Prepare original Android release signing
+        if: ${{ inputs.publish }}
         env:
           HANNA_KEYSTORE_BASE64: ${{ secrets.HANNA_KEYSTORE_BASE64 }}
           HANNA_KEY_ALIAS: ${{ secrets.HANNA_KEY_ALIAS }}
@@ -133,6 +134,7 @@ jobs:
         run: flutter test
 
       - name: Build signed Android APK with official update feed
+        if: ${{ inputs.publish }}
         working-directory: source
         env:
           HANNA_KEY_ALIAS: ${{ secrets.HANNA_KEY_ALIAS }}
@@ -154,6 +156,7 @@ jobs:
           echo "Android APK built successfully. Private source and keystore are never uploaded."
 
       - name: Verify original signing certificate against public 0.4.3
+        if: ${{ inputs.publish }}
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -217,4 +220,4 @@ jobs:
 
       - name: Validate-only completion
         if: ${{ !inputs.publish }}
-        run: echo "Private HANNA branch validated and signed in public runner. No public APK or update manifest changed."
+        run: echo "Private HANNA branch analyzed and tested. No signing key, APK build or public update needed."
