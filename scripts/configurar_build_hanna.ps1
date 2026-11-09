@@ -101,7 +101,7 @@ Write-Host 'Nomes dos segredos configurados (valores nunca sao exibidos):'
 if ($LASTEXITCODE -ne 0) { throw 'Nao foi possivel conferir os segredos.' }
 
 Write-Host ''
-Write-Host 'Configuracao concluida. As etapas 1-4 foram integradas a main (0.4.7).' 
+Write-Host 'Configuracao concluida. As etapas 1-5 foram integradas a main (0.4.8).' 
 Write-Host 'Opcional: repetir validacao sem publicar APK:'
 Write-Host 'gh workflow run hanna-public-apk.yml -R Nrzxl/hanna-conquest-downloads -f source_ref=main -F publish=false'
 Write-Host 'Apos confirmar o .jks original e os testes da main, publicar APK assinado:'
