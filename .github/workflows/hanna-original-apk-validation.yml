@@ -2,6 +2,9 @@ name: HANNA 0.4.9 - Assinatura ORIGINAL - Homologacao
 
 # Signed in-place update; manual-only; NEVER publishes OTA update.json.
 on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/hanna-original-apk-validation.yml']
   workflow_dispatch:
     inputs:
       confirm_original:
@@ -20,7 +23,7 @@ concurrency:
 jobs:
   signed-validation:
     name: Build and prove in-place upgrade compatibility
-    if: ${{ github.actor == 'Nrzxl' && inputs.confirm_original }}
+    if: ${{ github.actor == 'Nrzxl' && (github.event_name == 'push' || inputs.confirm_original) }}
     runs-on: ubuntu-latest
     timeout-minutes: 75
 
