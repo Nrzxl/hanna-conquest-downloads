@@ -168,7 +168,9 @@ jobs:
           import os,re
           from pathlib import Path
           r=Path(os.environ['RUNNER_TEMP'])
-          sig=lambda p: re.search(r'Signer #1 certificate SHA-256 digest:\s*([0-9a-fA-F]{64})', (r/p).read_text())
+          # Android build tools may identify the signer as "V2 Signer" rather
+          # than "Signer #1". Both are genuine apksigner certificate outputs.
+          sig=lambda p: re.search(r'(?:Signer #1|V[123] Signer): certificate SHA-256 digest:\s*([0-9a-fA-F]{64})', (r/p).read_text())
           old,new=sig('old-signing.txt'),sig('new-signing.txt')
           if not old or not new or old.group(1).lower()!=new.group(1).lower():
               raise SystemExit('Certificado de assinatura DIFERENTE do APK 0.4.3. Upload bloqueado.')
