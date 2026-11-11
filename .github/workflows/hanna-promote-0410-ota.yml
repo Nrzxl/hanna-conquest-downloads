@@ -1,0 +1,99 @@
+name: HANNA Mobile 0.4.10 - Publish verified OTA manifest
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/hanna-promote-0410-ota.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: hanna-mobile-ota-promotion
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    if: ${{ github.repository == 'Nrzxl/hanna-conquest-downloads' && github.ref == 'refs/heads/main' }}
+    name: Verify signed APK and publish official update.json
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout official update feed
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Retrieve only the approved 0.4.10 signed release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          REPO=Nrzxl/hanna-conquest-downloads
+          TAG=v0.4.10-b10353-preview
+          APK=HANNA-conquest-0.4.10-ORIGINAL-HOMOLOGACAO.apk
+          gh release view "$TAG" -R "$REPO" >/dev/null
+          gh release download "$TAG" -R "$REPO" --pattern "$APK" --dir "$RUNNER_TEMP"
+          gh release download "$TAG" -R "$REPO" --pattern "$APK.sha256" --dir "$RUNNER_TEMP"
+          test -s "$RUNNER_TEMP/$APK"
+          test -s "$RUNNER_TEMP/$APK.sha256"
+          expected="$(grep -oE '[0-9a-fA-F]{64}' "$RUNNER_TEMP/$APK.sha256" | head -n 1 | tr 'A-F' 'a-f')"
+          actual="$(sha256sum "$RUNNER_TEMP/$APK" | awk '{print $1}')"
+          test "${#expected}" -eq 64
+          if [[ "$expected" != "$actual" ]]; then
+            echo '::error::Official Android artifact hash does not match its verified build sidecar.'
+            exit 1
+          fi
+          echo "Verified signed release asset hash: $actual"
+          printf 'APK_SHA256=%s\n' "$actual" >> "$GITHUB_ENV"
+
+      - name: Confirm the original-signed Android build passed all gates
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          RUN_ID=43073829234
+          result="$(gh run view "$RUN_ID" -R "$GITHUB_REPOSITORY" --json conclusion --jq '.conclusion')"
+          test "$result" = success
+          echo 'Verified build 10353 passed full Flutter regressions, certificate and package checks.'
+
+      - name: Publish 0.4.10 manifest for in-app Android updates
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          path=Path('update.json')
+          prior=json.loads(path.read_text(encoding='utf-8'))
+          if prior.get('version') != '0.4.3' or prior.get('build') != 10351:
+              raise SystemExit('Unexpected feed state; refusing to overwrite another published release.')
+          digest=os.environ['APK_SHA256']
+          if len(digest)!=64 or any(c not in '0123456789abcdef' for c in digest):
+              raise SystemExit('Invalid APK digest')
+          data={
+              'version':'0.4.10',
+              'build':10353,
+              'apk_url':'https://github.com/Nrzxl/hanna-conquest-downloads/releases/download/v0.4.10-b10353-preview/HANNA-conquest-0.4.10-ORIGINAL-HOMOLOGACAO.apk',
+              'sha256':digest,
+              'notes':'HANNA 0.4.10: Home mais limpa, destaque no topo e Loja Steam com atualização de catálogo e filtros preservados.',
+          }
+          path.write_text(json.dumps(data,ensure_ascii=False,separators=(',',':'))+'\n',encoding='utf-8')
+          print('Ready to publish validated version 0.4.10, Android build 10353.')
+          PY
+          git diff --check
+          git add update.json
+          git -c user.name='hanna-conquest-bot' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'release(android): offer verified HANNA 0.4.10 (10353) through in-app updater'
+          git push origin HEAD:main
+
+      - name: Verify official manifest URL is published
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.loads(Path('update.json').read_text(encoding='utf-8'))
+          assert m['build']==10353 and m['version']=='0.4.10'
+          assert m['apk_url'].endswith('/HANNA-conquest-0.4.10-ORIGINAL-HOMOLOGACAO.apk')
+          print('Official manifest committed. Restart HANNA or use Check for Updates.')
+          PY
