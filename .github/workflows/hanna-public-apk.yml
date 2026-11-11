@@ -12,6 +12,7 @@ on:
         default: main
         options:
           - main
+          - fix/mobile-049-home-store-refresh
           - feat/mobile-0.4.9-instant-library
           - feat/mobile-0.4.8-retro-premium
           - feat/mobile-0.4.7-steam-wishlist-retro-store
@@ -100,6 +101,12 @@ jobs:
             python3 -c 'import json,sys; x=json.load(sys.stdin)["build"]; assert type(x) is int and x > 0; print(x)'
           )"
           NUMBER="$((CURRENT_BUILD + 1))"
+          # 0.4.9 was installed from the original-signed validation APK
+          # as Android versionCode 10352 without publishing update.json.
+          # Never attempt to install 0.4.10 on top with the same code.
+          if (( NUMBER < 10353 )); then
+            NUMBER=10353
+          fi
           echo "HANNA_BUILD_VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "HANNA_BUILD_NUMBER=$NUMBER" >> "$GITHUB_ENV"
           echo "HANNA_RELEASE_TAG=v$VERSION-b$NUMBER" >> "$GITHUB_ENV"
