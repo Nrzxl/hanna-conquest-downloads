@@ -47,7 +47,7 @@ jobs:
             "$SIGNER" verify --print-certs "$APK" > "$RUNNER_TEMP/cert-$VERSION.txt"
             "$AAPT" dump badging "$APK" > "$RUNNER_TEMP/meta-$VERSION.txt"
             echo "===== VERIFIED OFFICIAL HANNA $VERSION ====="
-            grep -E '^Signer #1 certificate (DN|SHA-256 digest):' "$RUNNER_TEMP/cert-$VERSION.txt" || true
+            sed -n '1,35p' "$RUNNER_TEMP/cert-$VERSION.txt"
             grep "^package:" "$RUNNER_TEMP/meta-$VERSION.txt" | head -n 1
           done
           python3 - <<'PY'
