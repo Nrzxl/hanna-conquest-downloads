@@ -1,0 +1,69 @@
+name: HANNA - Auditoria de certificados existentes
+
+# Read-only: inspects already published official APK files, never signs.
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/hanna-certificate-audit.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Install Android APK signature inspector
+        uses: android-actions/setup-android@v4
+
+      - name: Compare authentic published release certificates
+        shell: bash
+        run: |
+          set -euo pipefail
+          SIGNER="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name apksigner | sort -V | tail -n 1)"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name aapt | sort -V | tail -n 1)"
+          test -x "$SIGNER"
+          test -x "$AAPT"
+          echo "Inspecting public APK signatures only. No keystore or signing password is loaded."
+          for VERSION in 0.4.2 0.4.3; do
+            if [[ "$VERSION" == "0.4.2" ]]; then
+              TAG="v0.4.2-b10347"
+              EXPECTED="b257ded1d1a22224966a09f1063740bd80a4fa96a772f21d6e2b26de113417ea"
+            else
+              TAG="v0.4.3-b10351"
+              EXPECTED="c45182bf62166583f1a572b9c13858b7b95a083ae445b179cf775ede3d3ee5f3"
+            fi
+            APK="$RUNNER_TEMP/hanna-$VERSION-original.apk"
+            curl -fL --retry 2 --max-time 180 \
+              "https://github.com/Nrzxl/hanna-conquest-downloads/releases/download/$TAG/HANNA-conquest.apk" \
+              -o "$APK"
+            ACTUAL="$(sha256sum "$APK" | cut -d' ' -f1)"
+            if [[ "$ACTUAL" != "$EXPECTED" ]]; then
+              echo "::error::Published APK failed its official SHA256 for $VERSION"
+              exit 1
+            fi
+            "$SIGNER" verify --print-certs "$APK" > "$RUNNER_TEMP/cert-$VERSION.txt"
+            "$AAPT" dump badging "$APK" > "$RUNNER_TEMP/meta-$VERSION.txt"
+            echo "===== VERIFIED OFFICIAL HANNA $VERSION ====="
+            grep -E '^Signer #1 certificate (DN|SHA-256 digest):' "$RUNNER_TEMP/cert-$VERSION.txt" || true
+            grep "^package:" "$RUNNER_TEMP/meta-$VERSION.txt" | head -n 1
+          done
+          python3 - <<'PY'
+          import os,re
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])
+          signatures=[]
+          for v in ("0.4.2","0.4.3"):
+              content=(root/f"cert-{v}.txt").read_text(errors="replace")
+              hash=re.search(r"Signer #1 certificate SHA-256 digest:\s*([a-fA-F0-9]{64})",content)
+              dn=re.search(r"Signer #1 certificate DN:\s*(.*)",content)
+              if not hash:
+                  raise SystemExit(f"No APK signing certificate found for {v}")
+              signatures.append((hash.group(1).lower(),(dn.group(1) if dn else "")))
+          print("RESULT_CERTIFICATES_MATCH:",signatures[0][0]==signatures[1][0])
+          print("RESULT_042_CERT_DEBUG_DN:", "Android Debug" in signatures[0][1])
+          print("RESULT_043_CERT_DEBUG_DN:", "Android Debug" in signatures[1][1])
+          print("Note: a matching certificate proves signing identity only, not where the private keystore is stored.")
+          PY
