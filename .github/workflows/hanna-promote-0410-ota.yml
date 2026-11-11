@@ -33,12 +33,13 @@ jobs:
           REPO=Nrzxl/hanna-conquest-downloads
           TAG=v0.4.10-b10353-preview
           APK=HANNA-conquest-0.4.10-ORIGINAL-HOMOLOGACAO.apk
+          SHA=HANNA-conquest-0.4.10-ORIGINAL-HOMOLOGACAO.sha256
           gh release view "$TAG" -R "$REPO" >/dev/null
           gh release download "$TAG" -R "$REPO" --pattern "$APK" --dir "$RUNNER_TEMP"
-          gh release download "$TAG" -R "$REPO" --pattern "$APK.sha256" --dir "$RUNNER_TEMP"
+          gh release download "$TAG" -R "$REPO" --pattern "$SHA" --dir "$RUNNER_TEMP"
           test -s "$RUNNER_TEMP/$APK"
-          test -s "$RUNNER_TEMP/$APK.sha256"
-          expected="$(grep -oE '[0-9a-fA-F]{64}' "$RUNNER_TEMP/$APK.sha256" | head -n 1 | tr 'A-F' 'a-f')"
+          test -s "$RUNNER_TEMP/$SHA"
+          expected="$(grep -oE '[0-9a-fA-F]{64}' "$RUNNER_TEMP/$SHA" | head -n 1 | tr 'A-F' 'a-f')"
           actual="$(sha256sum "$RUNNER_TEMP/$APK" | awk '{print $1}')"
           test "${#expected}" -eq 64
           if [[ "$expected" != "$actual" ]]; then
