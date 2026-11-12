@@ -1,0 +1,55 @@
+name: HANNA Sync v1 - contract tests only
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/hanna-sync-v1-contract-ci.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hanna-sync-v1-contract-only
+  cancel-in-progress: false
+
+jobs:
+  validate-contract:
+    if: ${{ github.repository == 'Nrzxl/hanna-conquest-downloads' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout immutable private HANNA Sync source
+        uses: actions/checkout@v7
+        with:
+          repository: Nrzxl/hanna-conquest-mobile
+          ref: 57a2af19201a34fa469f9d588155ddd65706f96c
+          token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
+          persist-credentials: false
+          path: source
+      - name: Verify pinned source
+        run: |
+          set -euo pipefail
+          test "$(git -C source rev-parse HEAD)" = "57a2af19201a34fa469f9d588155ddd65706f96c"
+          test -s source/lib/sync/hanna_sync_contract.dart
+          test -s source/test/hanna_sync_contract_test.dart
+      - name: Set up Flutter 3.47.9
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.9'
+          cache: true
+      - name: Resolve Flutter dependencies
+        working-directory: source
+        run: flutter pub get
+      - name: Static analysis
+        working-directory: source
+        run: flutter analyze
+      - name: Verify HANNA Sync v1 protocol contract
+        working-directory: source
+        run: flutter test test/hanna_sync_contract_test.dart
+      - name: Run full Flutter regression suite
+        working-directory: source
+        run: flutter test
+      - name: Confirm no Android binary or OTA was published
+        run: echo 'Only contract tests and regressions ran. No APK, release, signing, update.json or backend changes.'
