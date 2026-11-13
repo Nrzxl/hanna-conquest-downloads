@@ -13,6 +13,7 @@ jobs:
   validate-ota-idempotency:
     name: Check already-promoted 0.4.14 can never overwrite itself
     uses: ./.github/workflows/hanna-ota-promote-verified.yml
+    # Validates official SHA sidecar basename and manifest idempotency.
     with:
       release_tag: v0.4.14-b10357-preview
       source_run_id: 43501671827
