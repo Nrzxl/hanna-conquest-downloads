@@ -1,0 +1,59 @@
+name: HANNA Sync Android - Local-First Foundation (No APK)
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/hanna-sync-mobile-local-first-ci.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hanna-sync-mobile-local-first-contract
+  cancel-in-progress: false
+
+jobs:
+  validate-local-first:
+    name: Validate isolated Android sync journal, controller and UI
+    if: ${{ github.repository == 'Nrzxl/hanna-conquest-downloads' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout immutable private HANNA Mobile source
+        uses: actions/checkout@v4
+        with:
+          repository: Nrzxl/hanna-conquest-mobile
+          ref: 784e9bc75a12033e6e97bc7987aa084b27113d15
+          token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
+          persist-credentials: false
+          path: source
+      - name: Assert pinned Flutter source, no new Android build
+        run: |
+          set -euo pipefail
+          test "$(git -C source rev-parse HEAD)" = "784e9bc75a12033e6e97bc7987aa084b27113d15"
+          grep -q '^version: 0.4.14+39$' source/pubspec.yaml
+          test -s source/lib/sync/hanna_sync_contract.dart
+          test -s source/lib/sync/hanna_sync_journal.dart
+          test -s source/lib/sync/hanna_sync_controller.dart
+          test -s source/lib/sync/hanna_sync_status_page.dart
+          test -s source/test/hanna_sync_journal_test.dart
+      - name: Flutter 3.47.9
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.9'
+          channel: stable
+          cache: true
+      - name: Resolve dependencies
+        working-directory: source
+        run: flutter pub get
+      - name: Static analyzer
+        working-directory: source
+        run: flutter analyze
+      - name: Targeted HANNA Sync regression
+        working-directory: source
+        run: flutter test test/hanna_sync_contract_test.dart test/hanna_sync_journal_test.dart test/hanna_sync_collections_diff_test.dart
+      - name: Full Flutter regression suite
+        working-directory: source
+        run: flutter test
+      - name: Confirm scope is source only
+        run: echo 'No APK, release, OTA, backend, Windows or SQL changes.'
