@@ -23,14 +23,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Nrzxl/hanna-conquest-mobile
-          ref: 784e9bc75a12033e6e97bc7987aa084b27113d15
+          ref: 554f06f7b24d57710504ae0403acf88dbaeb618b
           token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
           persist-credentials: false
           path: source
       - name: Assert pinned Flutter source, no new Android build
         run: |
           set -euo pipefail
-          test "$(git -C source rev-parse HEAD)" = "784e9bc75a12033e6e97bc7987aa084b27113d15"
+          test "$(git -C source rev-parse HEAD)" = "554f06f7b24d57710504ae0403acf88dbaeb618b"
           grep -q '^version: 0.4.14+39$' source/pubspec.yaml
           test -s source/lib/sync/hanna_sync_contract.dart
           test -s source/lib/sync/hanna_sync_journal.dart
