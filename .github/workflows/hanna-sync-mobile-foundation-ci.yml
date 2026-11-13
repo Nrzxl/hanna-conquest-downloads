@@ -1,0 +1,64 @@
+name: HANNA Sync Mobile - Local-first Foundation QA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/hanna-sync-mobile-foundation-ci.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hanna-sync-mobile-foundation-only
+  cancel-in-progress: false
+
+jobs:
+  validate-local-first:
+    if: ${{ github.repository == 'Nrzxl/hanna-conquest-downloads' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout immutable private HANNA Sync source
+        uses: actions/checkout@v7
+        with:
+          repository: Nrzxl/hanna-conquest-mobile
+          ref: 22f80f75a462659ca5be825ec2be28cfc1f58e01
+          token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
+          persist-credentials: false
+          path: source
+      - name: Verify pinned source
+        run: |
+          set -euo pipefail
+          test "$(git -C source rev-parse HEAD)" = "22f80f75a462659ca5be825ec2be28cfc1f58e01"
+          test -s source/lib/sync/hanna_sync_contract.dart
+          test -s source/test/hanna_sync_contract_test.dart
+      - name: Set up Flutter 3.47.9
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.9'
+          cache: true
+      - name: Resolve Flutter dependencies
+        working-directory: source
+        run: flutter pub get
+      - name: Static analysis
+        working-directory: source
+        run: flutter analyze
+      - name: Test HANNA Sync durable outbox and settings
+        working-directory: source
+        run: flutter test test/hanna_sync_contract_test.dart test/hanna_sync_journal_engine_test.dart test/hanna_sync_mobile_projection_widget_test.dart
+      - name: Run full Flutter regression suite
+        working-directory: source
+        run: flutter test
+      - name: Verify offline-first feature and Windows feedback file
+        working-directory: source
+        run: |
+          set -euo pipefail
+          test -s docs/HANNA_SYNC_WINDOWS_FEEDBACK.md
+          test -s lib/sync/hanna_sync_journal.dart
+          test -s lib/sync/hanna_sync_engine.dart
+          test -s lib/sync/hanna_sync_settings_page.dart
+          test -s lib/sync/hanna_sync_local_projection.dart
+      - name: Confirm no Android binary or OTA was published
+        run: echo 'Only contract tests and regressions ran. No APK, release, signing, update.json or backend changes.'
