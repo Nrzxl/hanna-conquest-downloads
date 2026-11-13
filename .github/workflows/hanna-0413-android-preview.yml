@@ -43,7 +43,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: Nrzxl/hanna-conquest-mobile
-          ref: 339412aa1560bcf25855624e9891bb34e4378245
+          ref: 8506eeb6519d9cd0abb5b0c926c5a8b5082ebe64
           token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
           persist-credentials: false
           path: source
