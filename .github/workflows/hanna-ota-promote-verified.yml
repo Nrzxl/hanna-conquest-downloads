@@ -1,0 +1,73 @@
+name: HANNA Mobile - Publish Verified APK to In-App Updater
+
+# Call after a successful signed-validation job; future releases automatically
+# reach update.json only after independent signature, app-id, SHA and CI checks.
+on:
+  workflow_call:
+    inputs:
+      release_tag:
+        required: true
+        type: string
+      source_run_id:
+        required: true
+        type: number
+      release_notes:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Signed official release tag (e.g. v0.4.15-b10358-preview)'
+        required: true
+        type: string
+      source_run_id:
+        description: 'Successful original-signed CI build run ID'
+        required: true
+        type: number
+      release_notes:
+        description: 'Brazilian Portuguese update notes'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: hanna-ota-verified-promotion
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: ${{ github.repository == 'Nrzxl/hanna-conquest-downloads' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+      HANNA_RELEASE_TAG: ${{ inputs.release_tag }}
+      HANNA_SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+      HANNA_RELEASE_NOTES: ${{ inputs.release_notes }}
+    steps:
+      - name: Checkout updater and verification script
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Prepare Android SDK for certificate and package verification
+        uses: android-actions/setup-android@v4
+      - name: Independently verify original-signed release and generate update.json
+        run: python3 .github/scripts/hanna_ota_promote_verified.py
+      - name: Publish monotonic official in-app updater manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          if git diff --quiet -- update.json; then
+            echo 'Already promoted: no manifest changes necessary.'
+            exit 0
+          fi
+          git add update.json
+          git -c user.name='github-actions[bot]' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              commit -m 'release(android): automatically publish signed, verified HANNA OTA'
+          git push origin HEAD:main
+          echo 'Android OTA manifest updated; users can upgrade in the HANNA app.'
