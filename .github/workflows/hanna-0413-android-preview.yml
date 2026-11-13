@@ -1,0 +1,234 @@
+name: HANNA 0.4.13 - APK Assinado para Celular
+
+# One-shot in-place preview on default branch; NEVER publishes OTA update.json.
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/hanna-0413-android-preview.yml']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: hanna-original-0413-phone-preview
+  cancel-in-progress: false
+
+jobs:
+  signed-validation:
+    name: Build and prove in-place upgrade compatibility
+    if: ${{ github.repository == 'Nrzxl/hanna-conquest-downloads' && github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+
+    steps:
+      - name: Require ORIGINAL signing secrets
+        env:
+          SOURCE_TOKEN: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
+          KEYSTORE_B64: ${{ secrets.HANNA_KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.HANNA_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.HANNA_KEY_PASSWORD }}
+          STORE_PASSWORD: ${{ secrets.HANNA_STORE_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for var in SOURCE_TOKEN KEYSTORE_B64 KEY_ALIAS KEY_PASSWORD STORE_PASSWORD; do
+            if [[ -z "${!var}" ]]; then
+              echo "::error::Segredo $var ausente. Execute scripts/configurar_build_hanna.ps1 no PC que possui o .jks ORIGINAL."
+              exit 1
+            fi
+          done
+          echo "Segredos configurados; valores protegidos."
+
+      - name: Checkout private cumulative HANNA main
+        uses: actions/checkout@v7
+        with:
+          repository: Nrzxl/hanna-conquest-mobile
+          ref: 339412aa1560bcf25855624e9891bb34e4378245
+          token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
+          persist-credentials: false
+          path: source
+
+      - name: Java 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Flutter 3.47.9
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.9'
+          cache: true
+
+      - name: Download and verify official 0.4.12 APK baseline
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '^version: 0.4.13+38$' source/pubspec.yaml || {
+            echo "::error::Private source does not match HANNA 0.4.13+38."
+            exit 1
+          }
+          gh api "repos/$GITHUB_REPOSITORY/contents/update.json" \
+            --jq .content | base64 --decode > "$RUNNER_TEMP/old-feed.json"
+          python3 - <<'PY'
+          import os, json, re
+          from pathlib import Path
+          feed = json.loads((Path(os.environ['RUNNER_TEMP'])/'old-feed.json').read_text())
+          expected = 'https://github.com/Nrzxl/hanna-conquest-downloads/releases/download/v0.4.12-b10355-preview/HANNA-conquest-0.4.12-ORIGINAL-HOMOLOGACAO.apk'
+          if feed.get('version') != '0.4.12' or feed.get('build') != 10355 or feed.get('apk_url') != expected:
+              raise SystemExit('Feed oficial mudou. Abortar em vez de arriscar atualizacao incompativel.')
+          if not re.fullmatch(r'[0-9a-fA-F]{64}', str(feed.get('sha256'))):
+              raise SystemExit('Hash oficial invalido.')
+          with open(os.environ['GITHUB_ENV'], 'a') as o:
+              o.write('HANNA_BUILD_NUMBER=10356\nHANNA_BUILD_VERSION=0.4.13\n')
+          print('Referencia verificada: 0.4.12 (10355); homologacao: 0.4.13 (10356).')
+          PY
+          curl -fL --retry 2 --max-time 180 \
+            https://github.com/Nrzxl/hanna-conquest-downloads/releases/download/v0.4.12-b10355-preview/HANNA-conquest-0.4.12-ORIGINAL-HOMOLOGACAO.apk \
+            -o "$RUNNER_TEMP/old-original.apk"
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP'])
+          expected = json.loads((root/'old-feed.json').read_text())['sha256'].lower()
+          actual = hashlib.sha256((root/'old-original.apk').read_bytes()).hexdigest()
+          if actual != expected:
+              raise SystemExit('SHA256 do APK original 0.4.12 diverge; interromper.')
+          print('APK original autenticado pelo checksum do update.json.')
+          PY
+
+      - name: Load original keystore into temporary runner only
+        env:
+          KEYSTORE_B64: ${{ secrets.HANNA_KEYSTORE_BASE64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/hanna-original.jks"
+          test -s "$RUNNER_TEMP/hanna-original.jks"
+          chmod 600 "$RUNNER_TEMP/hanna-original.jks"
+          echo "HANNA_KEYSTORE_PATH=$RUNNER_TEMP/hanna-original.jks" >> "$GITHUB_ENV"
+          echo "Assinatura original preparada; keystore nunca sera enviado como artefato."
+
+      - name: Resolve dependencies and analyze
+        working-directory: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter pub get
+          flutter analyze
+
+      - name: Run all Flutter regressions
+        working-directory: source
+        run: flutter test
+
+      - name: Build signed in-place cumulative 0.4.13 APK
+        working-directory: source
+        env:
+          HANNA_KEY_ALIAS: ${{ secrets.HANNA_KEY_ALIAS }}
+          HANNA_KEY_PASSWORD: ${{ secrets.HANNA_KEY_PASSWORD }}
+          HANNA_STORE_PASSWORD: ${{ secrets.HANNA_STORE_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter build apk --release \
+            --build-name=0.4.13 --build-number=10356 \
+            --dart-define=HANNA_BUILD_VERSION=0.4.13 \
+            --dart-define=HANNA_BUILD_NUMBER=10356 \
+            --dart-define=HANNA_UPDATE_MANIFEST_URL=https://raw.githubusercontent.com/Nrzxl/hanna-conquest-downloads/main/update.json
+          test -s build/app/outputs/flutter-apk/app-release.apk
+          cp build/app/outputs/flutter-apk/app-release.apk \
+            "$RUNNER_TEMP/HANNA-conquest-0.4.13-ORIGINAL-HOMOLOGACAO.apk"
+
+      - name: Verify both certificate and Android upgrade metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          OLD="$RUNNER_TEMP/old-original.apk"
+          NEW="$RUNNER_TEMP/HANNA-conquest-0.4.13-ORIGINAL-HOMOLOGACAO.apk"
+          SIGNER="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name apksigner | sort -V | tail -n 1)"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name aapt | sort -V | tail -n 1)"
+          test -x "$SIGNER"
+          test -x "$AAPT"
+          "$SIGNER" verify --print-certs "$OLD" > "$RUNNER_TEMP/old-signing.txt"
+          "$SIGNER" verify --print-certs "$NEW" > "$RUNNER_TEMP/new-signing.txt"
+          "$AAPT" dump badging "$OLD" > "$RUNNER_TEMP/old-badging.txt"
+          "$AAPT" dump badging "$NEW" > "$RUNNER_TEMP/new-badging.txt"
+          python3 - <<'PY'
+          import os,re
+          from pathlib import Path
+          r=Path(os.environ['RUNNER_TEMP'])
+          # Android build tools may identify the signer as "V2 Signer" rather
+          # than "Signer #1". Both are genuine apksigner certificate outputs.
+          sig=lambda p: re.search(r'(?:Signer #1|V[123] Signer): certificate SHA-256 digest:\s*([0-9a-fA-F]{64})', (r/p).read_text())
+          old,new=sig('old-signing.txt'),sig('new-signing.txt')
+          if not old or not new or old.group(1).lower()!=new.group(1).lower():
+              raise SystemExit('Certificado de assinatura DIFERENTE do APK 0.4.12. Upload bloqueado.')
+          pat=re.compile(r"^package: name='([^']+)' versionCode='(\d+)' versionName='([^']+)'",re.M)
+          old=pat.search((r/'old-badging.txt').read_text(errors='replace'))
+          new=pat.search((r/'new-badging.txt').read_text(errors='replace'))
+          if not old or not new:
+              raise SystemExit('Nao foi possivel conferir pacote e versionCode Android.')
+          if old.group(1)!=new.group(1) or new.group(1)!='com.example.hanna_conquest_app':
+              raise SystemExit('applicationId incompativel com instalacao original.')
+          if int(new.group(2))<=int(old.group(2)) or int(new.group(2))!=10356:
+              raise SystemExit('versionCode nao permite atualizacao por cima.')
+          if not new.group(3).startswith('0.4.13'):
+              raise SystemExit('VersionName nao e 0.4.13.')
+          print('Certificado ORIGINAL, packageId e upgrade code comprovadamente compativeis.')
+          print('Codigo Android:',old.group(2),'->',new.group(2))
+          PY
+          sha256sum "$NEW" > "$RUNNER_TEMP/HANNA-conquest-0.4.13-ORIGINAL-HOMOLOGACAO.sha256"
+          cat > "$RUNNER_TEMP/LEIA-PRIMEIRO.txt" <<'EOF'
+          HANNA conquest Mobile 0.4.13 - ASSINATURA ORIGINAL - HOMOLOGACAO
+          Este APK possui o MESMO certificado e packageId da versao 0.4.12.
+          Foi compilado somente para validar a atualizacao instalada por cima.
+          Faca backup dos dados, NAO desinstale o app atual e instale este APK.
+          Se a instalacao falhar, NAO desinstale para contornar a falha.
+          No Android, verifique contas, biblioteca, conquistas, artes e Loja.
+          A integridade final dos dados deve ser homologada no aparelho.
+          Este arquivo NAO foi publicado no atualizador automatico.
+          EOF
+
+      - name: Upload verified original-signed APK, NO OTA publication
+        uses: actions/upload-artifact@v4
+        with:
+          name: HANNA-0.4.13-ORIGINAL-HOMOLOGACAO
+          retention-days: 14
+          if-no-files-found: error
+          compression-level: 0
+          path: |
+            ${{ runner.temp }}/HANNA-conquest-0.4.13-ORIGINAL-HOMOLOGACAO.apk
+            ${{ runner.temp }}/HANNA-conquest-0.4.13-ORIGINAL-HOMOLOGACAO.sha256
+            ${{ runner.temp }}/LEIA-PRIMEIRO.txt
+
+      - name: Confirm release feed untouched
+        run: echo 'APK de teste assinado armazenado apenas como artefato temporario; nenhuma release ou update.json alterado.'
+
+      - name: Publish signed APK as directly downloadable Android prerelease
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          REPO="$GITHUB_REPOSITORY"
+          test "$REPO" = "Nrzxl/hanna-conquest-downloads"
+          TAG="v0.4.13-b10356-preview"
+          APK="$RUNNER_TEMP/HANNA-conquest-0.4.13-ORIGINAL-HOMOLOGACAO.apk"
+          test -s "$APK"
+          if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
+            echo '::error::Prerelease tag already exists. Refusing overwrite.'
+            exit 1
+          fi
+          gh release create "$TAG" "$APK" \
+            "$RUNNER_TEMP/HANNA-conquest-0.4.13-ORIGINAL-HOMOLOGACAO.sha256" \
+            --repo "$REPO" --prerelease \
+            --title 'HANNA Mobile 0.4.13 - Android Preview Original' \
+            --notes 'APK Android 10356 com assinatura original. Detecção automática de jogos PS2 pelo RetroAchievements, capas oficiais e biblioteca persistente. Instale por cima da 0.4.9. Preview de homologação: update.json e OTA permanecem inalterados.'
+          echo 'Signed Android preview published. No OTA update was published.'
