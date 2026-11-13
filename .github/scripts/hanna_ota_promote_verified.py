@@ -73,13 +73,14 @@ def main():
         raise ValueError("Release not published")
     name = "HANNA-conquest-" + version + "-ORIGINAL-HOMOLOGACAO.apk"
     assets = {a["name"]: a for a in release.get("assets", [])}
-    apk, sha_sidecar = assets.get(name), assets.get(name + ".sha256")
+    sidecar_name = name.removesuffix(".apk") + ".sha256"
+    apk, sha_sidecar = assets.get(name), assets.get(sidecar_name)
     if apk is None or sha_sidecar is None or apk.get("size", 0) < 10000000:
         raise ValueError("Verified APK and SHA sidecar required")
     url = ("https://github.com/" + REPO + "/releases/download/" +
            tag + "/" + name)
     if apk["browser_download_url"] != url or \
-            sha_sidecar["browser_download_url"] != url + ".sha256":
+            sha_sidecar["browser_download_url"] != url.removesuffix(".apk") + ".sha256":
         raise ValueError("Unexpected official release asset path")
     apk_sha = str(apk.get("digest", ""))
     if not re.fullmatch(r"sha256:[a-f0-9]{64}", apk_sha):
@@ -148,7 +149,7 @@ def main():
     subprocess.run(
         ["curl", "--fail", "--location", "--silent", "--show-error",
          "--retry", "2", "--max-time", "90", "--output", str(sidecar),
-         url + ".sha256"],
+         url.removesuffix(".apk") + ".sha256"],
         check=True,
     )
     if digest(before) != previous_sha or digest(after) != apk_sha[7:]:
