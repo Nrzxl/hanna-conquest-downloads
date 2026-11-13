@@ -1,0 +1,19 @@
+name: HANNA OTA - Self-check Reusable Promotion (No New APK)
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/hanna-ota-verified-smoke.yml']
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  validate-ota-idempotency:
+    name: Check already-promoted 0.4.14 can never overwrite itself
+    uses: ./.github/workflows/hanna-ota-promote-verified.yml
+    with:
+      release_tag: v0.4.14-b10357-preview
+      source_run_id: 43501671827
+      release_notes: 'Conquistas RA e Steam em português no Android, com assinatura e testes aprovados.'
