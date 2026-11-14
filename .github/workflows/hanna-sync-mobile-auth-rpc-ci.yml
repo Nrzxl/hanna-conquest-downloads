@@ -23,14 +23,14 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: Nrzxl/hanna-conquest-mobile
-          ref: 7e746e7af8c732330dbf74a4a7d681c52778a047
+          ref: 11b9f4abb0a75228a62a52ddf9ca5799470b633e
           token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
           persist-credentials: false
           path: source
       - name: Verify pinned source
         run: |
           set -euo pipefail
-          test "$(git -C source rev-parse HEAD)" = "7e746e7af8c732330dbf74a4a7d681c52778a047"
+          test "$(git -C source rev-parse HEAD)" = "11b9f4abb0a75228a62a52ddf9ca5799470b633e"
           test -s source/lib/sync/hanna_sync_contract.dart
           test -s source/test/hanna_sync_contract_test.dart
       - name: Set up Flutter 3.47.9
@@ -47,7 +47,7 @@ jobs:
         run: flutter analyze
       - name: Test HANNA Sync durable outbox and settings
         working-directory: source
-        run: flutter test test/hanna_sync_contract_test.dart test/hanna_sync_journal_engine_test.dart test/hanna_sync_mobile_projection_widget_test.dart test/hanna_sync_real_rpc_client_test.dart
+        run: flutter test test/hanna_sync_contract_test.dart test/hanna_sync_journal_engine_test.dart test/hanna_sync_mobile_projection_widget_test.dart test/hanna_sync_real_rpc_client_test.dart test/hanna_sync_work_protocol_test.dart
       - name: Run full Flutter regression suite
         working-directory: source
         run: flutter test
@@ -64,5 +64,7 @@ jobs:
           test -s lib/sync/hanna_sync_local_projection.dart
           test -s lib/sync/hanna_sync_rpc_gateway.dart
           test -s lib/sync/hanna_sync_device_vault.dart
+          test -s lib/sync/hanna_sync_protocol_client.dart
+          test -s backend/public_client_config.json
       - name: Confirm no Android binary or OTA was published
         run: echo 'Only contract tests and regressions ran. No APK, release, signing, update.json or backend changes.'
