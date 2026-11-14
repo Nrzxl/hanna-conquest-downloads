@@ -1,4 +1,4 @@
-name: HANNA Sync PR29 - Android QA isolated debug APK
+name: HANNA Sync Gate 2 - Android isolated QA debug APK
 
 on:
   push:
@@ -20,12 +20,13 @@ jobs:
     timeout-minutes: 40
     env:
       HANNA_SYNC_QA_ISOLATED: "1"
+      HANNA_SYNC_QA_GATE2: "1"
     steps:
       - name: Checkout immutable PR29 Flutter code
         uses: actions/checkout@v7
         with:
           repository: Nrzxl/hanna-conquest-mobile
-          ref: 69e955b136410568da299daaf2c51808f6a9af97
+          ref: 9cf1b1fefa5329dd9f4c426eb7ab4fae32b17c58
           token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
           persist-credentials: false
           path: source
@@ -34,7 +35,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C source rev-parse HEAD)" = "69e955b136410568da299daaf2c51808f6a9af97"
+          test "$(git -C source rev-parse HEAD)" = "9cf1b1fefa5329dd9f4c426eb7ab4fae32b17c58"
           python3 - <<'PY'
           import json
           from pathlib import Path
@@ -48,6 +49,8 @@ jobs:
           PY
           test -s source/lib/sync/hanna_sync_qa_smoke.dart
           test -s source/test/hanna_sync_qa_smoke_test.dart
+          test -s source/test/hanna_sync_gate2_projection_test.dart
+          test -s source/lib/sync/hanna_sync_qa_collection_pull.dart
 
       - name: Set up Flutter 3.47.9
         uses: subosito/flutter-action@v2
@@ -79,34 +82,35 @@ jobs:
             --dart-define=HANNA_SYNC_QA_SMOKE=true
           test -s build/app/outputs/flutter-apk/app-debug.apk
           mkdir -p ../qa-out
-          cp build/app/outputs/flutter-apk/app-debug.apk ../qa-out/HANNA_Sync_PR29_QA_ISOLATED_debug.apk
+          cp build/app/outputs/flutter-apk/app-debug.apk ../qa-out/HANNA_Sync_GATE2_QA_ISOLATED_debug.apk
 
       - name: Verify isolated package and write sanitized provenance
         shell: bash
         run: |
           set -euo pipefail
-          APK=qa-out/HANNA_Sync_PR29_QA_ISOLATED_debug.apk
+          APK=qa-out/HANNA_Sync_GATE2_QA_ISOLATED_debug.apk
           AAPT=$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)
           test -x "$AAPT"
-          "$AAPT" dump badging "$APK" | grep -F "package: name='com.example.hanna_conquest_app.syncqa'"
+          "$AAPT" dump badging "$APK" | grep -F "package: name='com.example.hanna_conquest_app.syncqa.gate2'"
           {
-            echo 'HANNA Sync PR29 -- ISOLATED DEBUG QA ONLY'
-            echo 'Source SHA: 69e955b136410568da299daaf2c51808f6a9af97'
+            echo 'HANNA Sync Gate 2 -- ISOLATED DEBUG QA ONLY'
+            echo 'Source SHA: 9cf1b1fefa5329dd9f4c426eb7ab4fae32b17c58'
             echo "GitHub CI run: https://github.com/Nrzxl/hanna-conquest-downloads/actions/runs/$GITHUB_RUN_ID"
-            echo 'Android applicationId: com.example.hanna_conquest_app.syncqa'
+            echo 'Android applicationId: com.example.hanna_conquest_app.syncqa.gate2'
             echo 'Signing: DEBUG only (not compatible with original release)'
             echo 'HANNA_SYNC_EXPERIMENTAL_ENABLED=true, HANNA_SYNC_QA_SMOKE=true'
             echo 'Backend URL: wbkfrldzuasicmtmndvd.supabase.co (public only)'
             echo 'deployment_verified=false; Auth admission still required'
-            echo 'Android physical Auth/write/readback: NOT_RUN (CI only)'
-            echo 'Independent Windows QA readback: NOT_RUN'
+            echo 'Gate 1 transport validated independently; original APK not replaced'
+            echo 'Android Gate 2 Auth/pull/persistence: NOT_RUN (CI only)'
+            echo 'Windows QA new operation/readback: NOT_RUN'
             sha256sum "$APK"
           } > qa-out/QA_BUILD_PROVENANCE.txt
 
       - name: Upload QA-only APK as workflow artifact (never a release or OTA)
         uses: actions/upload-artifact@v4
         with:
-          name: HANNA-Sync-PR29-QA-isolated-${{ github.run_number }}
+          name: HANNA-Sync-GATE2-QA-isolated-${{ github.run_number }}
           path: qa-out/
           if-no-files-found: error
           retention-days: 7
