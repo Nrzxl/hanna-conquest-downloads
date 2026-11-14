@@ -23,14 +23,14 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: Nrzxl/hanna-conquest-mobile
-          ref: 11b9f4abb0a75228a62a52ddf9ca5799470b633e
+          ref: 724926e39e14abc27aa0fad54af5ec7b263cd547
           token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
           persist-credentials: false
           path: source
       - name: Verify pinned source
         run: |
           set -euo pipefail
-          test "$(git -C source rev-parse HEAD)" = "11b9f4abb0a75228a62a52ddf9ca5799470b633e"
+          test "$(git -C source rev-parse HEAD)" = "724926e39e14abc27aa0fad54af5ec7b263cd547"
           test -s source/lib/sync/hanna_sync_contract.dart
           test -s source/test/hanna_sync_contract_test.dart
       - name: Set up Flutter 3.47.9
