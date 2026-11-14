@@ -1,0 +1,84 @@
+name: HANNA PT-BR - Translator reliability QA (isolated APK)
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/hanna-0414-ptbr-reliability-qa.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hanna-ptbr-qa-reliability
+  cancel-in-progress: false
+
+jobs:
+  translation-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      HANNA_PTBR_QA_ISOLATED: '1'
+    steps:
+      - name: Checkout exact private HANNA PT-BR fix
+        uses: actions/checkout@v7
+        with:
+          repository: Nrzxl/hanna-conquest-mobile
+          ref: b850500eee13433e607619849133651c9b899609
+          token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
+          persist-credentials: false
+          path: source
+
+      - name: Verify immutable source revision
+        working-directory: source
+        run: |
+          test "$(git rev-parse HEAD)" = "b850500eee13433e607619849133651c9b899609"
+          grep -q '^version: 0.4.14+39$' pubspec.yaml
+
+      - name: Java 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Flutter 3.47.9
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.9'
+          channel: stable
+          cache: true
+
+      - name: Analyze + all Flutter tests
+        working-directory: source
+        run: |
+          set -euo pipefail
+          flutter pub get
+          flutter analyze
+          flutter test
+
+      - name: Build Android translator QA with unique applicationId
+        working-directory: source
+        run: |
+          set -euo pipefail
+          flutter build apk --debug
+          apk=build/app/outputs/flutter-apk/app-debug.apk
+          test -s "$apk"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name aapt | sort -V | tail -n 1)"
+          "$AAPT" dump badging "$apk" | tee "$RUNNER_TEMP/badging.txt"
+          grep -q "name='com.example.hanna_conquest_app.ptbrqa'" "$RUNNER_TEMP/badging.txt"
+          grep -q "versionName='0.4.14-ptbrqa'" "$RUNNER_TEMP/badging.txt"
+          mkdir -p "$RUNNER_TEMP/hanna-ptbr-qa"
+          cp "$apk" "$RUNNER_TEMP/hanna-ptbr-qa/HANNA_PTBR_QA_ISOLATED_debug.apk"
+          sha256sum "$RUNNER_TEMP/hanna-ptbr-qa/HANNA_PTBR_QA_ISOLATED_debug.apk" > "$RUNNER_TEMP/hanna-ptbr-qa/APK_SHA256.txt"
+          printf 'Source SHA: b850500eee13433e607619849133651c9b899609\nPackage: com.example.hanna_conquest_app.ptbrqa\nMode: translation-only debug QA\nNever uninstall stable HANNA or publish OTA using this APK.\n' > "$RUNNER_TEMP/hanna-ptbr-qa/PROVENANCE.txt"
+
+      - name: Upload debug QA only - no release or OTA
+        uses: actions/upload-artifact@v4
+        with:
+          name: HANNA-PTBR-translation-reliability-QA
+          retention-days: 7
+          if-no-files-found: error
+          path: ${{ runner.temp }}/hanna-ptbr-qa/
