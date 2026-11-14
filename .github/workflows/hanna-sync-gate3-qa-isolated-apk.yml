@@ -1,0 +1,121 @@
+name: HANNA Sync Gate 3 - Android offline QA debug APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/hanna-sync-gate3-qa-isolated-apk.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hanna-sync-gate3-qa-apk-only
+  cancel-in-progress: false
+
+jobs:
+  qa-isolated-debug:
+    if: ${{ github.repository == 'Nrzxl/hanna-conquest-downloads' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      HANNA_SYNC_QA_ISOLATED: "1"
+      HANNA_SYNC_QA_GATE3: "1"
+    steps:
+      - name: Checkout immutable Gate 3 Flutter code
+        uses: actions/checkout@v7
+        with:
+          repository: Nrzxl/hanna-conquest-mobile
+          ref: de05a5be4d980b07112c56aeb1abe9d0c01833cd
+          token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
+          persist-credentials: false
+          path: source
+
+      - name: Verify source SHA and safety gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C source rev-parse HEAD)" = "de05a5be4d980b07112c56aeb1abe9d0c01833cd"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          cfg = json.loads(Path("source/backend/public_client_config.json").read_text())
+          assert cfg["url"] == "https://wbkfrldzuasicmtmndvd.supabase.co"
+          assert cfg["publishable_key"].startswith("sb_publishable_")
+          assert cfg["deployment_verified"] is False
+          with open(__import__("os").environ["GITHUB_ENV"], "a") as out:
+              out.write("HANNA_QA_PUBLISHABLE=" + cfg["publishable_key"] + "\n")
+          print("Public key present; deployment_verified=false, no credentials copied.")
+          PY
+          test -s source/lib/sync/hanna_sync_qa_smoke.dart
+          test -s source/test/hanna_sync_qa_smoke_test.dart
+          test -s source/test/hanna_sync_gate2_projection_test.dart
+          test -s source/lib/sync/hanna_sync_qa_collection_pull.dart
+          test -s source/lib/sync/hanna_sync_qa_gate3.dart
+          test -s source/test/hanna_sync_qa_gate3_offline_test.dart
+          test -s source/docs/HANNA_SYNC_GATE3_OFFLINE_ANDROID_WINDOWS.md
+
+      - name: Set up Flutter 3.47.9
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.47.9"
+          cache: true
+
+      - name: Resolve dependencies
+        working-directory: source
+        run: flutter pub get
+
+      - name: Verify analyze and entire Flutter regression before build
+        working-directory: source
+        run: |
+          flutter analyze
+          flutter test
+
+      - name: Build separately installable experimental Android debug APK
+        working-directory: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$HANNA_SYNC_QA_ISOLATED" = "1"
+          flutter build apk --debug \
+            --dart-define=HANNA_SYNC_SUPABASE_URL=https://wbkfrldzuasicmtmndvd.supabase.co \
+            --dart-define=HANNA_SYNC_SUPABASE_PUBLISHABLE_KEY="$HANNA_QA_PUBLISHABLE" \
+            --dart-define=HANNA_SYNC_EXPERIMENTAL_ENABLED=true \
+            --dart-define=HANNA_SYNC_QA_SMOKE=true \
+            --dart-define=HANNA_SYNC_QA_GATE3=true
+          test -s build/app/outputs/flutter-apk/app-debug.apk
+          mkdir -p ../qa-out
+          cp build/app/outputs/flutter-apk/app-debug.apk ../qa-out/HANNA_Sync_GATE3_QA_ISOLATED_debug.apk
+
+      - name: Verify isolated package and write sanitized provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=qa-out/HANNA_Sync_GATE3_QA_ISOLATED_debug.apk
+          AAPT=$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)
+          test -x "$AAPT"
+          "$AAPT" dump badging "$APK" | grep -F "package: name='com.example.hanna_conquest_app.syncqa.gate3'"
+          {
+            echo 'HANNA Sync Gate 3 -- ISOLATED DEBUG QA ONLY'
+            echo 'Source SHA: de05a5be4d980b07112c56aeb1abe9d0c01833cd'
+            echo "GitHub CI run: https://github.com/Nrzxl/hanna-conquest-downloads/actions/runs/$GITHUB_RUN_ID"
+            echo 'Android applicationId: com.example.hanna_conquest_app.syncqa.gate3'
+            echo 'Signing: DEBUG only (not compatible with original release)'
+            echo 'HANNA_SYNC_EXPERIMENTAL_ENABLED=true, HANNA_SYNC_QA_SMOKE=true'
+            echo 'Backend URL: wbkfrldzuasicmtmndvd.supabase.co (public only)'
+            echo 'deployment_verified=false; Auth admission still required'
+            echo 'Gate 1 transport validated independently; original APK not replaced'
+            echo 'Gate 2 Android physical UI/persistence: PASS MANUAL (no screenshot in CI)'
+            echo 'Gate 3 Android physical offline/restart/ACK: NOT_RUN (CI only)'
+            echo 'Gate 3 independent Windows QA receipt: NOT_RUN'
+            sha256sum "$APK"
+          } > qa-out/QA_BUILD_PROVENANCE.txt
+
+      - name: Upload QA-only APK as workflow artifact (never a release or OTA)
+        uses: actions/upload-artifact@v4
+        with:
+          name: HANNA-Sync-GATE3-QA-isolated-${{ github.run_number }}
+          path: qa-out/
+          if-no-files-found: error
+          retention-days: 7
