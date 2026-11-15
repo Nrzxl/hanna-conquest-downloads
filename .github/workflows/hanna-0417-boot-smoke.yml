@@ -49,6 +49,15 @@ jobs:
             --output "$RUNNER_TEMP/hanna-previous.apk"
           echo "dfec74a0cb566f1012b2ce78a20a4ea576f302f6e0b9e83c446fd7fdd33d4efd  $RUNNER_TEMP/hanna-previous.apk" | sha256sum -c -
 
+      - name: Enable Android emulator hardware acceleration
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -e /dev/kvm ]; then
+            sudo chmod 666 /dev/kvm
+            ls -l /dev/kvm
+          fi
+
       - name: Boot Android 10 emulator and prove actual upgrade and launch
         uses: reactivecircus/android-emulator-runner@v2
         with:
