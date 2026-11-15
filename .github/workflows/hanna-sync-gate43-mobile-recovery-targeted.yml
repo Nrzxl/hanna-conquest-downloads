@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: Nrzxl/hanna-conquest-mobile
-          ref: 66e17f3bb63c39d3c24572ce9145189e421b0139
+          ref: cbaf9c70033eb25c53774da4e2736f594a18a339
           token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
           persist-credentials: false
           path: source
@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C source rev-parse HEAD)" = "66e17f3bb63c39d3c24572ce9145189e421b0139"
+          test "$(git -C source rev-parse HEAD)" = "cbaf9c70033eb25c53774da4e2736f594a18a339"
           test -s source/lib/sync/hanna_sync_qa_conflict.dart
           test -s source/test/hanna_sync_qa_conflict_test.dart
           test -s source/docs/HANNA_SYNC_QA_CONFLICT_GATE4.md
