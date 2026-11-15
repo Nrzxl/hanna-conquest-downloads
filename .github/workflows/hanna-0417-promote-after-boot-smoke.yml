@@ -1,0 +1,81 @@
+name: HANNA 0.4.17 - Promote OTA ONLY after Android 10 boot smoke
+
+on:
+  workflow_run:
+    workflows:
+      - HANNA 0.4.17 - Android 10 boot recovery smoke
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: hanna-ota-verified-promotion
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: ${{ github.repository == 'Nrzxl/hanna-conquest-downloads' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+      HANNA_RELEASE_TAG: v0.4.17-b10360-preview
+      HANNA_SOURCE_RUN_ID: "43680491782"
+      HANNA_RELEASE_NOTES: "HANNA 0.4.17: recuperação emergencial da inicialização. Retira a integração ML Kit introduzida na 0.4.16 e restaura o código Android da 0.4.15 que abria. Instale por cima sem desinstalar. A tradução de conquistas permanece em revisão; HANNA Sync separado."
+
+    steps:
+      - name: Checkout official release verifier and current feed
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Prepare Android signature verifier
+        uses: android-actions/setup-android@v4
+
+      - name: Independently verify 0.4.17 signature, SHA, release and previous APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/hanna_ota_promote_verified.py
+
+      - name: Publish only the verified in-app update manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          if git diff --quiet -- update.json; then
+            echo "Already published the identical validated APK."
+            exit 0
+          fi
+          git add update.json
+          git -c user.name='github-actions[bot]' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              commit -m 'release(android): emergency HANNA 0.4.17 boot recovery after emulator smoke PASS'
+          git push origin HEAD:main
+
+      - name: Confirm official feed and release asset SHA agree
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/contents/update.json" --jq .content \
+            | base64 --decode > "$RUNNER_TEMP/official-feed.json"
+          gh api "repos/$GITHUB_REPOSITORY/releases/tags/v0.4.17-b10360-preview" \
+            > "$RUNNER_TEMP/hotfix-release.json"
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          r=Path(os.environ["RUNNER_TEMP"])
+          feed=json.loads((r/"official-feed.json").read_text())
+          release=json.loads((r/"hotfix-release.json").read_text())
+          name="HANNA-conquest-0.4.17-ORIGINAL-HOMOLOGACAO.apk"
+          assets=[a for a in release["assets"] if a["name"]==name]
+          assert len(assets)==1
+          digest=assets[0]["digest"]
+          assert isinstance(digest,str) and digest.startswith("sha256:") and len(digest)==71
+          assert feed["version"]=="0.4.17" and feed["build"]==10360
+          assert feed["sha256"]==digest.removeprefix("sha256:")
+          assert feed["apk_url"]==assets[0]["browser_download_url"]
+          print("PASS: boot-gated recovery feed points to independently verified signed APK.")
+          PY
