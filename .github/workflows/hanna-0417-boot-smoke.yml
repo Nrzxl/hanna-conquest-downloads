@@ -1,0 +1,70 @@
+name: HANNA 0.4.17 - Android 10 boot recovery smoke
+
+on:
+  workflow_run:
+    workflows:
+      - HANNA 0.4.17 - APK Assinado para Celular
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  boot-recovery:
+    if: ${{ github.repository == 'Nrzxl/hanna-conquest-downloads' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.id == 43680491782 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Download exact signed APK from validated build
+        uses: actions/download-artifact@v4
+        with:
+          name: HANNA-0.4.17-ORIGINAL-HOMOLOGACAO
+          run-id: 43680491782
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: qa
+
+      - name: Check versioned signed APK checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s qa/HANNA-conquest-0.4.17-ORIGINAL-HOMOLOGACAO.apk
+          cd qa
+          sha256sum -c HANNA-conquest-0.4.17-ORIGINAL-HOMOLOGACAO.sha256
+
+      - name: Download the exact previous 0.4.16 original-signed baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 2 --max-time 210 \
+            "https://github.com/Nrzxl/hanna-conquest-downloads/releases/download/v0.4.16-b10359-preview/HANNA-conquest-0.4.16-ORIGINAL-HOMOLOGACAO.apk" \
+            --output "$RUNNER_TEMP/hanna-previous.apk"
+          echo "dfec74a0cb566f1012b2ce78a20a4ea576f302f6e0b9e83c446fd7fdd33d4efd  $RUNNER_TEMP/hanna-previous.apk" | sha256sum -c -
+
+      - name: Boot Android 10 emulator and prove actual upgrade and launch
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          target: google_apis
+          arch: x86_64
+          profile: Nexus 6
+          disable-animations: true
+          emulator-boot-timeout: 600
+          script: |
+            set -euo pipefail
+            PACKAGE="com.example.hanna_conquest_app"
+            MAIN="$PACKAGE/$PACKAGE.MainActivity"
+            adb install "$RUNNER_TEMP/hanna-previous.apk"
+            adb install -r qa/HANNA-conquest-0.4.17-ORIGINAL-HOMOLOGACAO.apk
+            adb shell am start -W -n "$MAIN"
+            sleep 10
+            adb shell pidof "$PACKAGE"
+            adb shell dumpsys activity activities | grep -F "$PACKAGE"
+            echo "PASS: 0.4.16 -> 0.4.17 installed in-place; MainActivity remains running on Android 10."
+
+      - name: Upload safe emulator logs only on failure
+        if: failure()
+        shell: bash
+        run: |
+          adb logcat -d -s AndroidRuntime:E ActivityTaskManager:E | tail -n 80 || true
