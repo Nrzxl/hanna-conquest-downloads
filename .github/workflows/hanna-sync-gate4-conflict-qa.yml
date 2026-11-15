@@ -1,0 +1,125 @@
+name: HANNA Sync Gate 4 - Isolated physical conflict QA
+
+on:
+  push:
+    branches: [qa/hanna-sync-conflict-gate4]
+    paths:
+      - .github/workflows/hanna-sync-gate4-conflict-qa.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hanna-sync-gate4-conflict-qa-apk-only
+  cancel-in-progress: false
+
+jobs:
+  qa-isolated-debug:
+    if: ${{ github.repository == 'Nrzxl/hanna-conquest-downloads' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      HANNA_SYNC_QA_ISOLATED: "1"
+      HANNA_SYNC_QA_CONFLICT: "1"
+    steps:
+      - name: Checkout immutable Gate 4 conflict Flutter code
+        uses: actions/checkout@v7
+        with:
+          repository: Nrzxl/hanna-conquest-mobile
+          ref: 1a8d5c0cb9641a10230f8fc451ce37eca8243ed0
+          token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
+          persist-credentials: false
+          path: source
+
+      - name: Verify source SHA and safety gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C source rev-parse HEAD)" = "1a8d5c0cb9641a10230f8fc451ce37eca8243ed0"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          cfg = json.loads(Path("source/backend/public_client_config.json").read_text())
+          assert cfg["url"] == "https://wbkfrldzuasicmtmndvd.supabase.co"
+          assert cfg["publishable_key"].startswith("sb_publishable_")
+          assert cfg["deployment_verified"] is False
+          with open(__import__("os").environ["GITHUB_ENV"], "a") as out:
+              out.write("HANNA_QA_PUBLISHABLE=" + cfg["publishable_key"] + "\n")
+          print("Public key present; deployment_verified=false, no credentials copied.")
+          PY
+          test -s source/lib/sync/hanna_sync_qa_smoke.dart
+          test -s source/test/hanna_sync_qa_smoke_test.dart
+          test -s source/test/hanna_sync_gate2_projection_test.dart
+          test -s source/lib/sync/hanna_sync_qa_collection_pull.dart
+          test -s source/lib/sync/hanna_sync_qa_conflict.dart
+          test -s source/lib/sync/hanna_sync_qa_conflict_panel.dart
+          test -s source/test/hanna_sync_qa_conflict_test.dart
+          test -s source/docs/HANNA_SYNC_QA_CONFLICT_GATE4.md
+          test -s source/docs/HANNA_SYNC_WINDOWS_FEEDBACK.md
+
+      - name: Set up Flutter 3.47.9
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.47.9"
+          cache: true
+
+      - name: Resolve dependencies
+        working-directory: source
+        run: flutter pub get
+
+      - name: Verify analyze and entire Flutter regression before build
+        working-directory: source
+        run: |
+          flutter analyze
+          flutter test test/hanna_sync_qa_conflict_test.dart
+          flutter test
+
+      - name: Build separately installable conflict QA Android debug APK
+        working-directory: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$HANNA_SYNC_QA_ISOLATED" = "1"
+          test "$HANNA_SYNC_QA_CONFLICT" = "1"
+          flutter build apk --debug \
+            --dart-define=HANNA_SYNC_SUPABASE_URL=https://wbkfrldzuasicmtmndvd.supabase.co \
+            --dart-define=HANNA_SYNC_SUPABASE_PUBLISHABLE_KEY="$HANNA_QA_PUBLISHABLE" \
+            --dart-define=HANNA_SYNC_EXPERIMENTAL_ENABLED=true \
+            --dart-define=HANNA_SYNC_QA_SMOKE=true \
+            --dart-define=HANNA_SYNC_QA_CONFLICT=true
+          test -s build/app/outputs/flutter-apk/app-debug.apk
+          mkdir -p ../qa-out
+          cp build/app/outputs/flutter-apk/app-debug.apk ../qa-out/HANNA_Sync_GATE4_CONFLICT_QA_ISOLATED_debug.apk
+
+      - name: Verify isolated package and write sanitized provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=qa-out/HANNA_Sync_GATE4_CONFLICT_QA_ISOLATED_debug.apk
+          AAPT=$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)
+          test -x "$AAPT"
+          "$AAPT" dump badging "$APK" | grep -F "package: name='com.example.hanna_conquest_app.syncqa.conflict'"
+          {
+            echo 'HANNA Sync Gate 4 -- ISOLATED CONFLICT DEBUG QA ONLY'
+            echo 'Source SHA: 1a8d5c0cb9641a10230f8fc451ce37eca8243ed0'
+            echo "GitHub CI run: https://github.com/Nrzxl/hanna-conquest-downloads/actions/runs/$GITHUB_RUN_ID"
+            echo 'Android applicationId: com.example.hanna_conquest_app.syncqa.conflict'
+            echo 'Signing: DEBUG only (not compatible with original release)'
+            echo 'HANNA_SYNC_EXPERIMENTAL_ENABLED=true, HANNA_SYNC_QA_SMOKE=true'
+            echo 'Backend URL: wbkfrldzuasicmtmndvd.supabase.co (public only)'
+            echo 'deployment_verified=false; Auth admission still required'
+            echo 'Gate 1 transport validated independently; original APK not replaced'
+            echo 'Gate 2 Android physical UI/persistence: PASS MANUAL (no screenshot in CI)'
+            echo 'Gate 4 Android physical CAS conflict, offline, restart: NOT_RUN (CI only)'
+            echo 'Gate 4 independent Windows writer/readback: NOT_RUN'
+            sha256sum "$APK"
+          } > qa-out/QA_BUILD_PROVENANCE.txt
+
+      - name: Upload QA-only APK as workflow artifact (never a release or OTA)
+        uses: actions/upload-artifact@v4
+        with:
+          name: HANNA-Sync-GATE4-CONFLICT-QA-isolated-${{ github.run_number }}
+          path: qa-out/
+          if-no-files-found: error
+          retention-days: 7
