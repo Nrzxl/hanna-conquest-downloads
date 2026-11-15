@@ -113,8 +113,8 @@ jobs:
             echo 'deployment_verified=false; Auth admission still required'
             echo 'Gate 1 transport validated independently; original APK not replaced'
             echo 'Gate 2 Android physical UI/persistence: PASS MANUAL (no screenshot in CI)'
-            echo 'Gate 4 Android physical CAS revision preflight, conflict, offline, restart: NOT_RUN (CI only)
-            echo 'Old conflict QA package and data untouched; same app signed by ephemeral CI debug key''
+            echo 'Gate 4 Android physical CAS revision preflight, conflict, offline, restart: NOT_RUN (CI only)'
+            echo 'Old conflict QA package and data untouched; next QA is separately signed debug APK'
             echo 'Gate 4 independent Windows writer/readback: NOT_RUN'
             sha256sum "$APK"
           } > qa-out/QA_BUILD_PROVENANCE.txt
