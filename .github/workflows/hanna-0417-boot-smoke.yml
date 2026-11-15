@@ -1,6 +1,10 @@
 name: HANNA 0.4.17 - Android 10 boot recovery smoke
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/hanna-0417-boot-smoke.yml
   workflow_run:
     workflows:
       - HANNA 0.4.17 - APK Assinado para Celular
@@ -12,7 +16,7 @@ permissions:
 
 jobs:
   boot-recovery:
-    if: ${{ github.repository == 'Nrzxl/hanna-conquest-downloads' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.id == 43680491782 }}
+    if: ${{ github.repository == 'Nrzxl/hanna-conquest-downloads' && ((github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.id == 43680491782) || (github.event_name == 'push' && github.ref == 'refs/heads/main')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -30,8 +34,11 @@ jobs:
         run: |
           set -euo pipefail
           test -s qa/HANNA-conquest-0.4.17-ORIGINAL-HOMOLOGACAO.apk
-          cd qa
-          sha256sum -c HANNA-conquest-0.4.17-ORIGINAL-HOMOLOGACAO.sha256
+          expected="$(awk '{print $1}' qa/HANNA-conquest-0.4.17-ORIGINAL-HOMOLOGACAO.sha256)"
+          actual="$(sha256sum qa/HANNA-conquest-0.4.17-ORIGINAL-HOMOLOGACAO.apk | awk '{print $1}')"
+          test "${#expected}" -eq 64
+          test "$expected" = "$actual"
+          echo "PASS: signed APK checksum matches immutable CI artifact sidecar."
 
       - name: Download the exact previous 0.4.16 original-signed baseline
         shell: bash
