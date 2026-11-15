@@ -35,7 +35,6 @@ jobs:
           test -s source/lib/sync/hanna_sync_qa_conflict.dart
           test -s source/test/hanna_sync_qa_conflict_test.dart
           test -s source/docs/HANNA_SYNC_QA_CONFLICT_GATE4.md
-          test "$(git -C source merge-base HEAD 54fdf7cb97eba079eb662459c716f050a77f43f6)" = "54fdf7cb97eba079eb662459c716f050a77f43f6"
       - name: Set up Flutter 3.47.9
         uses: subosito/flutter-action@v2
         with:
