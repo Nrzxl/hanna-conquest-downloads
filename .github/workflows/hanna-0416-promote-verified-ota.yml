@@ -1,0 +1,75 @@
+name: HANNA 0.4.16 - Promote verified original-signed OTA
+
+# One-shot promotion. Trigger only when THIS workflow is first committed.
+# The existing production promotion verifier checks certificate, SHA256,
+# monotonic versionCode, package identity, release and successful signed CI.
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/hanna-0416-promote-verified-ota.yml
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: hanna-ota-verified-promotion
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: ${{ github.repository == 'Nrzxl/hanna-conquest-downloads' && github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+      HANNA_RELEASE_TAG: v0.4.16-b10359-preview
+      HANNA_SOURCE_RUN_ID: "43678198577"
+      HANNA_RELEASE_NOTES: "HANNA 0.4.16: repara a preparação nativa dos modelos EN-PT do ML Kit e mostra erros específicos de download, espaço ou serviço. Mantém conquistas Steam/RetroAchievements originais, atualização por cima da 0.4.15 e HANNA Sync separado."
+
+    steps:
+      - name: Checkout official updater and existing validation script
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Install Android SDK build-tools for independent APK verification
+        uses: android-actions/setup-android@v4
+
+      - name: Verify official 0.4.16 prerelease and prepare monotonic update
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/hanna_ota_promote_verified.py
+
+      - name: Publish ONLY the independently validated update.json
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          if git diff --quiet -- update.json; then
+            echo "Manifest already points to the identical verified APK."
+            exit 0
+          fi
+          git add update.json
+          git -c user.name='github-actions[bot]' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              commit -m 'release(android): offer verified HANNA 0.4.16 via in-app updater'
+          git push origin HEAD:main
+
+      - name: Verify published update feed against original signing release
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/contents/update.json" \
+            --jq '.content' | base64 --decode > "$RUNNER_TEMP/official-update.json"
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          v=json.loads((Path(os.environ["RUNNER_TEMP"])/"official-update.json").read_text())
+          assert v["version"]=="0.4.16"
+          assert v["build"]==10359
+          assert v["sha256"]=="dfec74a0cb566f1012b2ce78a20a4ea576f302f6e0b9e83c446fd7fdd33d4efd"
+          assert v["apk_url"]=="https://github.com/Nrzxl/hanna-conquest-downloads/releases/download/v0.4.16-b10359-preview/HANNA-conquest-0.4.16-ORIGINAL-HOMOLOGACAO.apk"
+          print("PASS: official in-app update feed points to the verified 0.4.16 APK.")
+          PY
