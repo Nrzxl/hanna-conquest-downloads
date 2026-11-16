@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: Nrzxl/hanna-conquest-mobile
-          ref: f10d609a6f26b50a00439c8fb88f564c1f0f2fdc
+          ref: 4ef3a0472064192f10eb3d08cf39bc51bf1312d0
           token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
           persist-credentials: false
           path: source
@@ -36,7 +36,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C source rev-parse HEAD)" = "f10d609a6f26b50a00439c8fb88f564c1f0f2fdc"
+          test "$(git -C source rev-parse HEAD)" = "4ef3a0472064192f10eb3d08cf39bc51bf1312d0"
           python3 - <<'PY'
           import json
           from pathlib import Path
@@ -82,8 +82,55 @@ jobs:
           flutter test test/hanna_sync_qa_conflict_test.dart --dart-define=HANNA_GUIDED_EXPORT_FIXTURES=true
           flutter test
           test -s build/qa_guided_fixtures/PREPARED.json
+          test -s build/qa_guided_fixtures/PREPARED_KEEP_WINDOWS.json
           test -s build/qa_guided_fixtures/COMPLETED_KEEP_ANDROID.json
           test -s build/qa_guided_fixtures/COMPLETED_KEEP_WINDOWS.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          base = Path("build/qa_guided_fixtures")
+          groups = [
+              ("PREPARED.json", "COMPLETED_KEEP_ANDROID.json", "KEEP_ANDROID"),
+              ("PREPARED_KEEP_WINDOWS.json", "COMPLETED_KEEP_WINDOWS.json", "KEEP_WINDOWS"),
+          ]
+          frozen = ("runId", "collectionId", "baseRevision", "operationId",
+                    "originalEnvelopeSha256", "principalFingerprint",
+                    "deviceFingerprint", "fixtureName", "localName",
+                    "initialDocument", "offlineDocument")
+          unsafe = {"deviceProof", "sessionId", "accessToken", "refreshToken",
+                    "email", "jwt", "password"}
+          for before, after, choice in groups:
+              a = json.loads((base / before).read_text())
+              b = json.loads((base / after).read_text())
+              for item in (a, b):
+                  assert item["gate"] == "HANNA_SYNC_GATE43_GUIDED"
+                  assert item["schemaVersion"] == 1
+                  assert not unsafe.intersection(item.keys())
+                  assert item["deployment_verified"] is False
+                  assert item["fixtureName"].startswith("QA Conflito")
+                  assert item["localName"].startswith("QA Android offline")
+              assert a["stage"] == "PREPARED"
+              assert b["stage"] == "COMPLETED"
+              assert a["pending"] == 0
+              assert a["offlineConfirmedByUser"] is False
+              assert b["originalOperationRetained"] is True
+              assert b["resolutionExplicitlyConfirmed"] is True
+              assert b["resolutionReceipt"]["choice"] == choice
+              for field in frozen:
+                  assert a[field] == b[field], (choice, field)
+              assert b["conflictReceipt"]["operationId"] == a["operationId"]
+              assert b["conflictReceipt"]["baseRevision"] == a["baseRevision"]
+              assert b["conflictReceipt"]["remoteDocument"]["name"].startswith("QA Windows")
+              if choice == "KEEP_WINDOWS":
+                  assert b["ackRevision"] is None
+                  assert b["resolutionReceipt"]["newServerWrite"] is False
+                  assert b["resolutionReceipt"]["operationId"] is None
+              else:
+                  assert b["resolutionReceipt"]["newServerWrite"] is True
+                  assert b["resolutionReceipt"]["operationId"] != a["operationId"]
+                  assert b["resolutionReceipt"]["ackRevision"] == b["finalRevision"]
+              print(f"GUIDED_CROSSCHECK_{choice}: PASS same run, same original digest")
+          PY
           mkdir -p ../qa-out/fixtures
           cp build/qa_guided_fixtures/*.json ../qa-out/fixtures/
 
@@ -116,7 +163,7 @@ jobs:
           "$AAPT" dump badging "$APK" | grep -F "package: name='com.example.hanna_conquest_app.syncqa.guided4'"
           {
             echo 'HANNA Sync Gate 4.3 Guided v4 -- ISOLATED OFFLINE WIZARD DEBUG QA ONLY'
-            echo 'Source SHA: f10d609a6f26b50a00439c8fb88f564c1f0f2fdc'
+            echo 'Source SHA: 4ef3a0472064192f10eb3d08cf39bc51bf1312d0'
             echo "GitHub CI run: https://github.com/Nrzxl/hanna-conquest-downloads/actions/runs/$GITHUB_RUN_ID"
             echo 'Android applicationId: com.example.hanna_conquest_app.syncqa.guided4'
             echo 'Signing: DEBUG only (not compatible with original release)'
