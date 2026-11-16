@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: Nrzxl/hanna-conquest-mobile
-          ref: 2ac40923c3a1bc777b95329394ef0a08ffcc7bde
+          ref: f469e09bfb8758406821cbf3e8c0069e08f9ece6
           token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
           persist-credentials: false
           path: source
@@ -36,7 +36,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C source rev-parse HEAD)" = "2ac40923c3a1bc777b95329394ef0a08ffcc7bde"
+          test "$(git -C source rev-parse HEAD)" = "f469e09bfb8758406821cbf3e8c0069e08f9ece6"
           python3 - <<'PY'
           import json
           from pathlib import Path
@@ -111,7 +111,7 @@ jobs:
           "$AAPT" dump badging "$APK" | grep -F "package: name='com.example.hanna_conquest_app.syncqa.guided'"
           {
             echo 'HANNA Sync Gate 4.3 guided -- ISOLATED PT-BR DEBUG QA ONLY'
-            echo 'Source SHA: 2ac40923c3a1bc777b95329394ef0a08ffcc7bde'
+            echo 'Source SHA: f469e09bfb8758406821cbf3e8c0069e08f9ece6'
             echo "GitHub CI run: https://github.com/Nrzxl/hanna-conquest-downloads/actions/runs/$GITHUB_RUN_ID"
             echo 'Android applicationId: com.example.hanna_conquest_app.syncqa.guided'
             echo 'Signing: DEBUG only (not compatible with original release)'
