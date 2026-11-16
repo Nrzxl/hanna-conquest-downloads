@@ -1,4 +1,4 @@
-name: HANNA Sync Gate 4.3 - Guided Offline Wizard QA
+name: HANNA Sync Gate 4.3 - Guided JSON v1 conflict receipts QA
 
 on:
   push:
@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: Nrzxl/hanna-conquest-mobile
-          ref: 1836806444f65441cceb9772d7824ad97426f8a1
+          ref: f10d609a6f26b50a00439c8fb88f564c1f0f2fdc
           token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
           persist-credentials: false
           path: source
@@ -36,7 +36,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C source rev-parse HEAD)" = "1836806444f65441cceb9772d7824ad97426f8a1"
+          test "$(git -C source rev-parse HEAD)" = "f10d609a6f26b50a00439c8fb88f564c1f0f2fdc"
           python3 - <<'PY'
           import json
           from pathlib import Path
@@ -79,8 +79,13 @@ jobs:
         working-directory: source
         run: |
           flutter analyze
-          flutter test test/hanna_sync_qa_conflict_test.dart
+          flutter test test/hanna_sync_qa_conflict_test.dart --dart-define=HANNA_GUIDED_EXPORT_FIXTURES=true
           flutter test
+          test -s build/qa_guided_fixtures/PREPARED.json
+          test -s build/qa_guided_fixtures/COMPLETED_KEEP_ANDROID.json
+          test -s build/qa_guided_fixtures/COMPLETED_KEEP_WINDOWS.json
+          mkdir -p ../qa-out/fixtures
+          cp build/qa_guided_fixtures/*.json ../qa-out/fixtures/
 
       - name: Build separately installable guided QA Android debug APK
         working-directory: source
@@ -111,7 +116,7 @@ jobs:
           "$AAPT" dump badging "$APK" | grep -F "package: name='com.example.hanna_conquest_app.syncqa.guided4'"
           {
             echo 'HANNA Sync Gate 4.3 Guided v4 -- ISOLATED OFFLINE WIZARD DEBUG QA ONLY'
-            echo 'Source SHA: 1836806444f65441cceb9772d7824ad97426f8a1'
+            echo 'Source SHA: f10d609a6f26b50a00439c8fb88f564c1f0f2fdc'
             echo "GitHub CI run: https://github.com/Nrzxl/hanna-conquest-downloads/actions/runs/$GITHUB_RUN_ID"
             echo 'Android applicationId: com.example.hanna_conquest_app.syncqa.guided4'
             echo 'Signing: DEBUG only (not compatible with original release)'
@@ -123,6 +128,15 @@ jobs:
             echo 'Gate 4.3 physical offline restart/CAS conflict/readback: NOT_RUN (CI only)'
             echo 'Older Gate QA v1/v2/v3 packages and data untouched; new guided4 package separate and debug-signed'
             echo 'Gate 4.3 Windows concurrent writer/final readback: NOT_RUN'
+            echo 'Strict serializer fixtures (MOCK only; no physical evidence):'
+            sha256sum qa-out/fixtures/*.json
+            echo 'Dart-generated fixture JSON begin:'
+            for file in qa-out/fixtures/*.json; do
+              name=$(basename "$file")
+              echo "GUIDED_FIXTURE_START:$name"
+              cat "$file"
+              echo "GUIDED_FIXTURE_END:$name"
+            done
             sha256sum "$APK"
           } > qa-out/QA_BUILD_PROVENANCE.txt
 
