@@ -1,0 +1,124 @@
+name: HANNA Sync Mobile UI Integration QA (no OTA)
+
+on:
+  push:
+    branches: [qa/hanna-sync-mobile-ui-20261120]
+    paths:
+      - .github/workflows/hanna-sync-mobile-ui-qa.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hanna-sync-ui-integration-qa-only
+  cancel-in-progress: false
+
+jobs:
+  isolated-flutter-qa:
+    if: github.repository == 'Nrzxl/hanna-conquest-downloads'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      HANNA_SYNC_QA_ISOLATED: '1'
+      HANNA_SYNC_QA_UI_V1: '1'
+    steps:
+      - name: Checkout pinned Flutter UI integration source
+        uses: actions/checkout@v4
+        with:
+          repository: Nrzxl/hanna-conquest-mobile
+          ref: 793eab8dfab7e99ee14cf857b07c7c7a6febdeae
+          token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
+          persist-credentials: false
+          path: source
+
+      - name: Validate source pin, QA-only gate, and safe public configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C source rev-parse HEAD)" = '793eab8dfab7e99ee14cf857b07c7c7a6febdeae'
+          test -f source/lib/sync/hanna_sync_ui_qa.dart
+          test -f source/lib/sync/hanna_sync_ui_qa_widgets.dart
+          test -f source/test/hanna_sync_ui_qa_test.dart
+          test -f source/docs/qa/20261120-mobile-sync-ui/README.md
+          grep -q 'HANNA_SYNC_UI_QA' source/lib/sync/hanna_sync_ui_qa.dart
+          grep -q 'syncqa.ui1' source/android/app/build.gradle.kts
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          config=json.loads(Path('source/backend/public_client_config.json').read_text())
+          assert config['url']=='https://wbkfrldzuasicmtmndvd.supabase.co'
+          assert config['deployment_verified'] is False
+          assert config['publishable_key'].startswith('sb_publishable_')
+          assert len(config['publishable_key'])>=24
+          with open(os.environ['GITHUB_ENV'],'a') as f:
+              f.write('HANNA_QA_PUBLISHABLE='+config['publishable_key']+'\n')
+          print('Public key verified; deployment_verified=false; private credentials not copied')
+          PY
+
+      - name: Install Flutter 3.47.9
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.9'
+          cache: true
+
+      - name: Resolve packages
+        working-directory: source
+        run: flutter pub get
+
+      - name: Analyze, run QA UI tests, and full Flutter suite
+        working-directory: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter analyze
+          flutter test test/hanna_sync_ui_qa_test.dart
+          flutter test
+
+      - name: Build isolated, parallel-installable Android UI QA APK
+        working-directory: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$HANNA_SYNC_QA_ISOLATED" = '1'
+          test "$HANNA_SYNC_QA_UI_V1" = '1'
+          flutter build apk --debug \
+            --dart-define=HANNA_SYNC_SUPABASE_URL=https://wbkfrldzuasicmtmndvd.supabase.co \
+            --dart-define=HANNA_SYNC_SUPABASE_PUBLISHABLE_KEY="$HANNA_QA_PUBLISHABLE" \
+            --dart-define=HANNA_SYNC_EXPERIMENTAL_ENABLED=true \
+            --dart-define=HANNA_SYNC_UI_QA=true
+          test -s build/app/outputs/flutter-apk/app-debug.apk
+          mkdir -p ../qa-out
+          cp build/app/outputs/flutter-apk/app-debug.apk ../qa-out/HANNA_Sync_UI_Integration_QA_debug.apk
+
+      - name: Inspect package ID, manifest, hashes and provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=qa-out/HANNA_Sync_UI_Integration_QA_debug.apk
+          AAPT=$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)
+          test -x "$AAPT"
+          "$AAPT" dump badging "$APK" | grep -F "package: name='com.example.hanna_conquest_app.syncqa.ui1'"
+          {
+            echo 'HANNA Conquest Mobile Sync UI Integration QA-only'
+            echo 'Source SHA: 793eab8dfab7e99ee14cf857b07c7c7a6febdeae'
+            echo 'Base SHA: 92316e25d93666186c4c83804e3f1969ceaa396e'
+            echo "GitHub Actions: https://github.com/Nrzxl/hanna-conquest-downloads/actions/runs/$GITHUB_RUN_ID"
+            echo 'Package: com.example.hanna_conquest_app.syncqa.ui1'
+            echo 'Signing: DEBUG only, separate app, no personal install/update'
+            echo 'HANNA_SYNC_UI_QA=true and HANNA_SYNC_EXPERIMENTAL_ENABLED=true'
+            echo 'Backend: wbkfrldzuasicmtmndvd.supabase.co (existing v1 only)'
+            echo 'deployment_verified=false; personal data import disabled'
+            echo 'Mock/local Flutter suite: see steps; Hosted QA/Físico: NOT_RUN in CI'
+            echo 'Windows QA independent workstream: no Windows files modified here'
+            echo 'SHA256:'
+            sha256sum "$APK"
+          } > qa-out/QA_BUILD_PROVENANCE.txt
+
+      - name: Upload APK as QA workflow artifact only
+        uses: actions/upload-artifact@v4
+        with:
+          name: HANNA-Sync-UI-Integration-QA-${{ github.run_number }}
+          path: qa-out/
+          if-no-files-found: error
+          retention-days: 7
