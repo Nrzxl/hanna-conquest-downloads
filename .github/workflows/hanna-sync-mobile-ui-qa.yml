@@ -26,7 +26,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Nrzxl/hanna-conquest-mobile
-          ref: 793eab8dfab7e99ee14cf857b07c7c7a6febdeae
+          ref: ffd26cd0a7e27b9b89e6517cf1a41317f3b151aa
           token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
           persist-credentials: false
           path: source
@@ -35,7 +35,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C source rev-parse HEAD)" = '793eab8dfab7e99ee14cf857b07c7c7a6febdeae'
+          test "$(git -C source rev-parse HEAD)" = 'ffd26cd0a7e27b9b89e6517cf1a41317f3b151aa'
           test -f source/lib/sync/hanna_sync_ui_qa.dart
           test -f source/lib/sync/hanna_sync_ui_qa_widgets.dart
           test -f source/test/hanna_sync_ui_qa_test.dart
@@ -101,7 +101,7 @@ jobs:
           "$AAPT" dump badging "$APK" | grep -F "package: name='com.example.hanna_conquest_app.syncqa.ui1'"
           {
             echo 'HANNA Conquest Mobile Sync UI Integration QA-only'
-            echo 'Source SHA: 793eab8dfab7e99ee14cf857b07c7c7a6febdeae'
+            echo 'Source SHA: ffd26cd0a7e27b9b89e6517cf1a41317f3b151aa'
             echo 'Base SHA: 92316e25d93666186c4c83804e3f1969ceaa396e'
             echo "GitHub Actions: https://github.com/Nrzxl/hanna-conquest-downloads/actions/runs/$GITHUB_RUN_ID"
             echo 'Package: com.example.hanna_conquest_app.syncqa.ui1'
