@@ -1,0 +1,716 @@
+{
+  "file": "HANNA_WINDOWS_SYNC_INTEGRATION_QA_20261120.zip",
+  "bytes": 61346960,
+  "sha256": "adec09b75a34365f4b27b2b792e9b7eeecf13ffac895136428f6c6f13f86f2fe",
+  "deployment_verified": false,
+  "parts": [
+    {
+      "index": 0,
+      "path": "qa-windows-payload/part-000.bin",
+      "sha": "71bc13bf9a723705aa1aae83e455aec14f9047d9",
+      "size": 524288
+    },
+    {
+      "index": 1,
+      "path": "qa-windows-payload/part-001.bin",
+      "sha": "c119abffa020d8f50952d3b91d4e8b11767e5eca",
+      "size": 524288
+    },
+    {
+      "index": 2,
+      "path": "qa-windows-payload/part-002.bin",
+      "sha": "ced9cab1c53b0390e081a3028237a61260b53927",
+      "size": 524288
+    },
+    {
+      "index": 3,
+      "path": "qa-windows-payload/part-003.bin",
+      "sha": "d09ce18af96934ce2d4e7284bd3d011e3b07f569",
+      "size": 524288
+    },
+    {
+      "index": 4,
+      "path": "qa-windows-payload/part-004.bin",
+      "sha": "55435f0010a338d91efca00c1dcad2715f244840",
+      "size": 524288
+    },
+    {
+      "index": 5,
+      "path": "qa-windows-payload/part-005.bin",
+      "sha": "46654327416a303614d6a7abb699a974ad5eba9f",
+      "size": 524288
+    },
+    {
+      "index": 6,
+      "path": "qa-windows-payload/part-006.bin",
+      "sha": "1199b900d8096b8f88eccc96c6069abd32fecb9c",
+      "size": 524288
+    },
+    {
+      "index": 7,
+      "path": "qa-windows-payload/part-007.bin",
+      "sha": "11b50c2302c3d5981f43736e103e34f092da937a",
+      "size": 524288
+    },
+    {
+      "index": 8,
+      "path": "qa-windows-payload/part-008.bin",
+      "sha": "79ba45e9b5299963a1a506c310e506ed25c163c7",
+      "size": 524288
+    },
+    {
+      "index": 9,
+      "path": "qa-windows-payload/part-009.bin",
+      "sha": "b98d3b0b4dc40c5473c7c6f2a9676ceac3ab2ca2",
+      "size": 524288
+    },
+    {
+      "index": 10,
+      "path": "qa-windows-payload/part-010.bin",
+      "sha": "4496a0c6e0a3d56bae5b244d5a982b4fbbbb3662",
+      "size": 524288
+    },
+    {
+      "index": 11,
+      "path": "qa-windows-payload/part-011.bin",
+      "sha": "5fdd397b54461ff0f47e971a105100ca5448093a",
+      "size": 524288
+    },
+    {
+      "index": 12,
+      "path": "qa-windows-payload/part-012.bin",
+      "sha": "bd215b507b3e9e4f273efddc63fadc53be9c5078",
+      "size": 524288
+    },
+    {
+      "index": 13,
+      "path": "qa-windows-payload/part-013.bin",
+      "sha": "1acee3d808860afe8366ed53047166ead78e11c4",
+      "size": 524288
+    },
+    {
+      "index": 14,
+      "path": "qa-windows-payload/part-014.bin",
+      "sha": "bc1e830457ce76650b3a4e678fdebafdc65cc191",
+      "size": 524288
+    },
+    {
+      "index": 15,
+      "path": "qa-windows-payload/part-015.bin",
+      "sha": "a51bea418e6be0f7316f25d1f3d69cf0d1f29c20",
+      "size": 524288
+    },
+    {
+      "index": 16,
+      "path": "qa-windows-payload/part-016.bin",
+      "sha": "5d6765253fa4766b7d03804ecee59d025e3b7e83",
+      "size": 524288
+    },
+    {
+      "index": 17,
+      "path": "qa-windows-payload/part-017.bin",
+      "sha": "cd1c9e22c73a02754184b3fc4e5b1196e7879e95",
+      "size": 524288
+    },
+    {
+      "index": 18,
+      "path": "qa-windows-payload/part-018.bin",
+      "sha": "634d5e83eb7301cee00072dd3d0efd4747857c3e",
+      "size": 524288
+    },
+    {
+      "index": 19,
+      "path": "qa-windows-payload/part-019.bin",
+      "sha": "8a2e80239ecb715eede1792fd4d94e402b32f46f",
+      "size": 524288
+    },
+    {
+      "index": 20,
+      "path": "qa-windows-payload/part-020.bin",
+      "sha": "3fb7218dcfc83fefd5bb66ace17737a906a5e7e6",
+      "size": 524288
+    },
+    {
+      "index": 21,
+      "path": "qa-windows-payload/part-021.bin",
+      "sha": "9c681dacf9df4aa5b3cf83c506468b4cc32f1df3",
+      "size": 524288
+    },
+    {
+      "index": 22,
+      "path": "qa-windows-payload/part-022.bin",
+      "sha": "264d2c8cd1cf09493d47b5c0d0615b3ebd0c1de3",
+      "size": 524288
+    },
+    {
+      "index": 23,
+      "path": "qa-windows-payload/part-023.bin",
+      "sha": "dfab12c8afd632243cc0ee13a77f26c89ffbacf7",
+      "size": 524288
+    },
+    {
+      "index": 24,
+      "path": "qa-windows-payload/part-024.bin",
+      "sha": "82f7661dbd54e203cfe1f0821c9fb7ce03581eb8",
+      "size": 524288
+    },
+    {
+      "index": 25,
+      "path": "qa-windows-payload/part-025.bin",
+      "sha": "a6492e78f5c3e8621a36ea7e1594f57c5cc9a4bd",
+      "size": 524288
+    },
+    {
+      "index": 26,
+      "path": "qa-windows-payload/part-026.bin",
+      "sha": "febe45cffcd20ce179eb1b25bd594770e406af54",
+      "size": 524288
+    },
+    {
+      "index": 27,
+      "path": "qa-windows-payload/part-027.bin",
+      "sha": "9686124eede4a7d2e669328a15bedfb8ac807d2d",
+      "size": 524288
+    },
+    {
+      "index": 28,
+      "path": "qa-windows-payload/part-028.bin",
+      "sha": "b365b968c446e896c3ef740f5085590c6932073b",
+      "size": 524288
+    },
+    {
+      "index": 29,
+      "path": "qa-windows-payload/part-029.bin",
+      "sha": "d35d85e6b11c25bb3c5bebba44966d914bb118e0",
+      "size": 524288
+    },
+    {
+      "index": 30,
+      "path": "qa-windows-payload/part-030.bin",
+      "sha": "7a18e967efa650642ffadefa1755004d5324231c",
+      "size": 524288
+    },
+    {
+      "index": 31,
+      "path": "qa-windows-payload/part-031.bin",
+      "sha": "e7c34c7954883e839521fb13a96ddb54fdb25ccd",
+      "size": 524288
+    },
+    {
+      "index": 32,
+      "path": "qa-windows-payload/part-032.bin",
+      "sha": "777b44462be171d64d7f5b91ad19e291a31a8284",
+      "size": 524288
+    },
+    {
+      "index": 33,
+      "path": "qa-windows-payload/part-033.bin",
+      "sha": "9a15502dd0a155d270f7eda402d5a73813224028",
+      "size": 524288
+    },
+    {
+      "index": 34,
+      "path": "qa-windows-payload/part-034.bin",
+      "sha": "8e720efc07f0c971dbbf8dfbd49dc7bb48316c5b",
+      "size": 524288
+    },
+    {
+      "index": 35,
+      "path": "qa-windows-payload/part-035.bin",
+      "sha": "67160e1d911d9602eb5254f8fdd4f2bf92404e6f",
+      "size": 524288
+    },
+    {
+      "index": 36,
+      "path": "qa-windows-payload/part-036.bin",
+      "sha": "a85133f55fb10c46668196f6524a04de548dde90",
+      "size": 524288
+    },
+    {
+      "index": 37,
+      "path": "qa-windows-payload/part-037.bin",
+      "sha": "72e9bb8be5f5df3089da79fa71f7e736a8966e85",
+      "size": 524288
+    },
+    {
+      "index": 38,
+      "path": "qa-windows-payload/part-038.bin",
+      "sha": "c6596075fae12ea82a9fa1c4dbccc3c0c5a8a03a",
+      "size": 524288
+    },
+    {
+      "index": 39,
+      "path": "qa-windows-payload/part-039.bin",
+      "sha": "03edac2c673e7e0509773cb3b6d2f2245ec5eb8b",
+      "size": 524288
+    },
+    {
+      "index": 40,
+      "path": "qa-windows-payload/part-040.bin",
+      "sha": "3cf93d0d67333df1d8876eb8f4f8902689c48e41",
+      "size": 524288
+    },
+    {
+      "index": 41,
+      "path": "qa-windows-payload/part-041.bin",
+      "sha": "cb245f6a5abaa2dbba152f47d40ccbebb18322a7",
+      "size": 524288
+    },
+    {
+      "index": 42,
+      "path": "qa-windows-payload/part-042.bin",
+      "sha": "a269c816557be7514e7ea366ecbdb5d52118e732",
+      "size": 524288
+    },
+    {
+      "index": 43,
+      "path": "qa-windows-payload/part-043.bin",
+      "sha": "eb63e0cd9462c0aa59f484605e91ccfa17236b0e",
+      "size": 524288
+    },
+    {
+      "index": 44,
+      "path": "qa-windows-payload/part-044.bin",
+      "sha": "360f39afc9e6a407f4ffe5a2d80c6744450bf04f",
+      "size": 524288
+    },
+    {
+      "index": 45,
+      "path": "qa-windows-payload/part-045.bin",
+      "sha": "3ba36c06d030d4daaf93e6f3e4a418e57296426a",
+      "size": 524288
+    },
+    {
+      "index": 46,
+      "path": "qa-windows-payload/part-046.bin",
+      "sha": "341f6b42f112102f938e649391ea2407362793ab",
+      "size": 524288
+    },
+    {
+      "index": 47,
+      "path": "qa-windows-payload/part-047.bin",
+      "sha": "b529fa3be51ae6cf514327aaeaab41acdf222055",
+      "size": 524288
+    },
+    {
+      "index": 48,
+      "path": "qa-windows-payload/part-048.bin",
+      "sha": "5e441006e7f2b92e3ad11565db6f2a7623cafa2f",
+      "size": 524288
+    },
+    {
+      "index": 49,
+      "path": "qa-windows-payload/part-049.bin",
+      "sha": "71dd1b7aac1743903cf0de7b0edd16b2e13419ab",
+      "size": 524288
+    },
+    {
+      "index": 50,
+      "path": "qa-windows-payload/part-050.bin",
+      "sha": "da09ee7074bd2d7d1968da1f42b04db643b4700c",
+      "size": 524288
+    },
+    {
+      "index": 51,
+      "path": "qa-windows-payload/part-051.bin",
+      "sha": "c81ea6e3414d76e84a7b369d83785783688987e1",
+      "size": 524288
+    },
+    {
+      "index": 52,
+      "path": "qa-windows-payload/part-052.bin",
+      "sha": "4f6a7549af9648497ca22902c0ec7ce564e2129c",
+      "size": 524288
+    },
+    {
+      "index": 53,
+      "path": "qa-windows-payload/part-053.bin",
+      "sha": "aa45f8858a6c7cb3328354173cbe58836fc88700",
+      "size": 524288
+    },
+    {
+      "index": 54,
+      "path": "qa-windows-payload/part-054.bin",
+      "sha": "997febc152eca6170479aacb18df5383c9e0fd14",
+      "size": 524288
+    },
+    {
+      "index": 55,
+      "path": "qa-windows-payload/part-055.bin",
+      "sha": "0ef1f193afc1eccb2220f1ba0b5a1f89acb6e336",
+      "size": 524288
+    },
+    {
+      "index": 56,
+      "path": "qa-windows-payload/part-056.bin",
+      "sha": "10f17b987a70e10a8a3d134d0ad3f3b03bb7283c",
+      "size": 524288
+    },
+    {
+      "index": 57,
+      "path": "qa-windows-payload/part-057.bin",
+      "sha": "1aec1a6a3bcf54a7a52e8915cb3912680df76337",
+      "size": 524288
+    },
+    {
+      "index": 58,
+      "path": "qa-windows-payload/part-058.bin",
+      "sha": "ee7637b8421741892c0de5a4ecd52b3280d96aac",
+      "size": 524288
+    },
+    {
+      "index": 59,
+      "path": "qa-windows-payload/part-059.bin",
+      "sha": "a10a44376b7d3f1de858629566bcfb23a7647771",
+      "size": 524288
+    },
+    {
+      "index": 60,
+      "path": "qa-windows-payload/part-060.bin",
+      "sha": "f0feba0a177a20200b9d11f3f6a7490bc7afdf76",
+      "size": 524288
+    },
+    {
+      "index": 61,
+      "path": "qa-windows-payload/part-061.bin",
+      "sha": "dbfd56b3acaef1872f93290f4177c18beed9123f",
+      "size": 524288
+    },
+    {
+      "index": 62,
+      "path": "qa-windows-payload/part-062.bin",
+      "sha": "7e1fc149090612da666ac4c185d5d1cdff351277",
+      "size": 524288
+    },
+    {
+      "index": 63,
+      "path": "qa-windows-payload/part-063.bin",
+      "sha": "032541d31105b17bf98c6fc87eeed8d0a6b0c92b",
+      "size": 524288
+    },
+    {
+      "index": 64,
+      "path": "qa-windows-payload/part-064.bin",
+      "sha": "c968b53e2e7ef8b0e0213678218a6bb8c42782d0",
+      "size": 524288
+    },
+    {
+      "index": 65,
+      "path": "qa-windows-payload/part-065.bin",
+      "sha": "fe1edde7417f612f0006e47384859e731450d454",
+      "size": 524288
+    },
+    {
+      "index": 66,
+      "path": "qa-windows-payload/part-066.bin",
+      "sha": "4ed2537120b27c78664595745558756b7ee8d6d4",
+      "size": 524288
+    },
+    {
+      "index": 67,
+      "path": "qa-windows-payload/part-067.bin",
+      "sha": "da4da52e31c490378ae47532a9895a97e1941995",
+      "size": 524288
+    },
+    {
+      "index": 68,
+      "path": "qa-windows-payload/part-068.bin",
+      "sha": "874e761dd0391492680d6d31643d9731cf646e11",
+      "size": 524288
+    },
+    {
+      "index": 69,
+      "path": "qa-windows-payload/part-069.bin",
+      "sha": "6db9c487e3de5c4ebf5c63f2026a56298371b6d6",
+      "size": 524288
+    },
+    {
+      "index": 70,
+      "path": "qa-windows-payload/part-070.bin",
+      "sha": "161cb96227f46e5d4377ded4c365adbd5f0f160c",
+      "size": 524288
+    },
+    {
+      "index": 71,
+      "path": "qa-windows-payload/part-071.bin",
+      "sha": "0cdabb419433460b0b85d92d912934d30c75252e",
+      "size": 524288
+    },
+    {
+      "index": 72,
+      "path": "qa-windows-payload/part-072.bin",
+      "sha": "3588e5a6ebb1e92721f1efc4a01601aea558cefe",
+      "size": 524288
+    },
+    {
+      "index": 73,
+      "path": "qa-windows-payload/part-073.bin",
+      "sha": "88203fafbbd0802d12c91400eb3f76120599d949",
+      "size": 524288
+    },
+    {
+      "index": 74,
+      "path": "qa-windows-payload/part-074.bin",
+      "sha": "f8dc5531c6853e1094b081d8a358a8bae42794b4",
+      "size": 524288
+    },
+    {
+      "index": 75,
+      "path": "qa-windows-payload/part-075.bin",
+      "sha": "991d01efc83adda2f7b6e71ae54ef8f8bfb671cb",
+      "size": 524288
+    },
+    {
+      "index": 76,
+      "path": "qa-windows-payload/part-076.bin",
+      "sha": "895228767cf2a4825b1824f9fb71703eba49f1d8",
+      "size": 524288
+    },
+    {
+      "index": 77,
+      "path": "qa-windows-payload/part-077.bin",
+      "sha": "9e98526f9abf58bb7e7a765473bb8442cf76ea31",
+      "size": 524288
+    },
+    {
+      "index": 78,
+      "path": "qa-windows-payload/part-078.bin",
+      "sha": "1f202ba85765a50d3f0a18b3c03e891589866faf",
+      "size": 524288
+    },
+    {
+      "index": 79,
+      "path": "qa-windows-payload/part-079.bin",
+      "sha": "bfadece744ebf14c71fef48ca09e98ca1119f110",
+      "size": 524288
+    },
+    {
+      "index": 80,
+      "path": "qa-windows-payload/part-080.bin",
+      "sha": "1ed53c116bd18cbf7a72d3b4de27ac8bb5823adf",
+      "size": 524288
+    },
+    {
+      "index": 81,
+      "path": "qa-windows-payload/part-081.bin",
+      "sha": "1a16d532d3ef406e1d970b7fe6cce9222483d2e6",
+      "size": 524288
+    },
+    {
+      "index": 82,
+      "path": "qa-windows-payload/part-082.bin",
+      "sha": "3665a9e8bf9eea891f674e927bc5e7fd778d3daa",
+      "size": 524288
+    },
+    {
+      "index": 83,
+      "path": "qa-windows-payload/part-083.bin",
+      "sha": "f4298e613ab5a11437b4ea42e1b715327b06e636",
+      "size": 524288
+    },
+    {
+      "index": 84,
+      "path": "qa-windows-payload/part-084.bin",
+      "sha": "9a9f34f38425bd42a19958c3b2e9e81503fe3b27",
+      "size": 524288
+    },
+    {
+      "index": 85,
+      "path": "qa-windows-payload/part-085.bin",
+      "sha": "50ea7c2aa864693cac5a4a22b93b9c7375956930",
+      "size": 524288
+    },
+    {
+      "index": 86,
+      "path": "qa-windows-payload/part-086.bin",
+      "sha": "b72503a574d52a64fda3c8c812b60d692ddaaf51",
+      "size": 524288
+    },
+    {
+      "index": 87,
+      "path": "qa-windows-payload/part-087.bin",
+      "sha": "ddcca69c8d6205468849795e084c430b08634a24",
+      "size": 524288
+    },
+    {
+      "index": 88,
+      "path": "qa-windows-payload/part-088.bin",
+      "sha": "24178b81d47e079d6cac1930ffeed769c3ab111c",
+      "size": 524288
+    },
+    {
+      "index": 89,
+      "path": "qa-windows-payload/part-089.bin",
+      "sha": "c5b497bd72467484f23f7671fab440215f6c3f77",
+      "size": 524288
+    },
+    {
+      "index": 90,
+      "path": "qa-windows-payload/part-090.bin",
+      "sha": "390ac10684e86f1ee3dfe23dd9ba1a53de12eb64",
+      "size": 524288
+    },
+    {
+      "index": 91,
+      "path": "qa-windows-payload/part-091.bin",
+      "sha": "a5a5a3d7db9f75479a39b81aa14bce0feefc1fcf",
+      "size": 524288
+    },
+    {
+      "index": 92,
+      "path": "qa-windows-payload/part-092.bin",
+      "sha": "023d0d39298bb778bb05bbaaf1c8c147b0c7aeca",
+      "size": 524288
+    },
+    {
+      "index": 93,
+      "path": "qa-windows-payload/part-093.bin",
+      "sha": "2ab63bd266fd1fce1553d251f69bae8d0de7faf6",
+      "size": 524288
+    },
+    {
+      "index": 94,
+      "path": "qa-windows-payload/part-094.bin",
+      "sha": "cf8fe47b95be630f5ea563c14b801df0df21c62d",
+      "size": 524288
+    },
+    {
+      "index": 95,
+      "path": "qa-windows-payload/part-095.bin",
+      "sha": "dc8cca5f8ce286509d07180aed01fffdfab6da30",
+      "size": 524288
+    },
+    {
+      "index": 96,
+      "path": "qa-windows-payload/part-096.bin",
+      "sha": "d2caa7bc3b81866d605bab0c97ff6bbb0e46032b",
+      "size": 524288
+    },
+    {
+      "index": 97,
+      "path": "qa-windows-payload/part-097.bin",
+      "sha": "6cfeceefd6752410d1b7ac5f3a6d67c9be9a1f1b",
+      "size": 524288
+    },
+    {
+      "index": 98,
+      "path": "qa-windows-payload/part-098.bin",
+      "sha": "7e3d56e299ba199b1cd38fde87e3ff01d65030f5",
+      "size": 524288
+    },
+    {
+      "index": 99,
+      "path": "qa-windows-payload/part-099.bin",
+      "sha": "1bdeb0b9d1d80827a04990ad0c7c8a1ebceb82d2",
+      "size": 524288
+    },
+    {
+      "index": 100,
+      "path": "qa-windows-payload/part-100.bin",
+      "sha": "17e55db5738938f93bc5252f24a83183dbb121bb",
+      "size": 524288
+    },
+    {
+      "index": 101,
+      "path": "qa-windows-payload/part-101.bin",
+      "sha": "e1312ee12aa7565eacb86666d69769fe2b4e9a50",
+      "size": 524288
+    },
+    {
+      "index": 102,
+      "path": "qa-windows-payload/part-102.bin",
+      "sha": "e0ad8b30384e4a9a851200482b988191382904c6",
+      "size": 524288
+    },
+    {
+      "index": 103,
+      "path": "qa-windows-payload/part-103.bin",
+      "sha": "f50822774c4895b7e65334d7cc33f6f9c1bbbbf5",
+      "size": 524288
+    },
+    {
+      "index": 104,
+      "path": "qa-windows-payload/part-104.bin",
+      "sha": "11ac45225834d226d1660710e744c0e6c5b7fa7b",
+      "size": 524288
+    },
+    {
+      "index": 105,
+      "path": "qa-windows-payload/part-105.bin",
+      "sha": "7f662c5610e1418a34f7f8f428a5960adad1c2be",
+      "size": 524288
+    },
+    {
+      "index": 106,
+      "path": "qa-windows-payload/part-106.bin",
+      "sha": "bd328a5223222500b490e6d8107fcf4e33b44d67",
+      "size": 524288
+    },
+    {
+      "index": 107,
+      "path": "qa-windows-payload/part-107.bin",
+      "sha": "f3dec8924a9af7d9eeb3f625195747bbc4ff66c0",
+      "size": 524288
+    },
+    {
+      "index": 108,
+      "path": "qa-windows-payload/part-108.bin",
+      "sha": "7157838771275e662b3dad069c685f052cf62e22",
+      "size": 524288
+    },
+    {
+      "index": 109,
+      "path": "qa-windows-payload/part-109.bin",
+      "sha": "b5bd1da3423390b24bb3dc9c7fc7fc2a0c0f6607",
+      "size": 524288
+    },
+    {
+      "index": 110,
+      "path": "qa-windows-payload/part-110.bin",
+      "sha": "093c61f7afaf4d2af66b8fda8bcd3df96d855de0",
+      "size": 524288
+    },
+    {
+      "index": 111,
+      "path": "qa-windows-payload/part-111.bin",
+      "sha": "5e235f9c80fd1d1b0abcf2dbb8af3a3b05ee3593",
+      "size": 524288
+    },
+    {
+      "index": 112,
+      "path": "qa-windows-payload/part-112.bin",
+      "sha": "a435a8f0b87997fb624b66a27ae573ed96ee1e7e",
+      "size": 524288
+    },
+    {
+      "index": 113,
+      "path": "qa-windows-payload/part-113.bin",
+      "sha": "9682aed46de9ddb87d740c294eb2e6977cb03f40",
+      "size": 524288
+    },
+    {
+      "index": 114,
+      "path": "qa-windows-payload/part-114.bin",
+      "sha": "70093b6cb5293eccd8337dfec51fc4b751016e2a",
+      "size": 524288
+    },
+    {
+      "index": 115,
+      "path": "qa-windows-payload/part-115.bin",
+      "sha": "08e635b87c5c9bbfc883606bf59571592f27affa",
+      "size": 524288
+    },
+    {
+      "index": 116,
+      "path": "qa-windows-payload/part-116.bin",
+      "sha": "08f305bc9cc25a7e9f4146c8dce00954095aa1e7",
+      "size": 524288
+    },
+    {
+      "index": 117,
+      "path": "qa-windows-payload/part-117.bin",
+      "sha": "1626257b30374b8bd7b1112c08982368dca10e7c",
+      "size": 5264
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "file": "HANNA_WINDOWS_SYNC_INTEGRATION_QA_20261120.zip",
+  "bytes": 61346960,
+  "sha256": "adec09b75a34365f4b27b2b792e9b7eeecf13ffac895136428f6c6f13f86f2fe",
+  "crc": "PASS",
+  "entries": 6676,
+  "manifestHashesVerified": 6675,
+  "textFilesScanned": 1318,
+  "credentialOrPersonalEmailMatches": 0,
+  "personalDatabaseOrSessionFiles": 0,
+  "deployment_verified": false,
+  "observedAtUtc": "2026-11-20T23:58:56.175575+00:00"
+}

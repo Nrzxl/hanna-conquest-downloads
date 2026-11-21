@@ -1,0 +1,38 @@
+name: HANNA Windows Sync Integration QA original ZIP
+
+on:
+  push:
+    branches: [qa/windows-sync-integration-artifact-20261120]
+    paths:
+      - qa-windows-payload/**
+      - ci/reconstruct_windows_qa.py
+      - .github/workflows/hanna-windows-sync-qa-artifact.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hanna-windows-sync-qa-original-zip
+  cancel-in-progress: false
+
+jobs:
+  reconstruct-verify-publish-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout authorized QA payload
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Reconstruct exact ZIP and verify sanitization, hashes and CRC
+        run: python3 ci/reconstruct_windows_qa.py
+      - name: Publish QA artifact only
+        uses: actions/upload-artifact@v4
+        with:
+          name: HANNA-Windows-Sync-Integration-QA-20261120
+          path: qa-windows-delivery/
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
