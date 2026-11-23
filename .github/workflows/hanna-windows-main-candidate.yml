@@ -29,7 +29,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Nrzxl/hanna-conquest-mobile
-          ref: f8e0125e29af8da51492379547a1133926e126f9
+          ref: 6ffb7459fb90014af3f20c47881cfa5993cfae33
           token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
           persist-credentials: false
           path: private
@@ -47,7 +47,7 @@ jobs:
       - name: Verify private source commit
         shell: pwsh
         run: |
-          if ((git -C private rev-parse HEAD) -ne 'f8e0125e29af8da51492379547a1133926e126f9') { throw 'Source pin mismatch' }
+          if ((git -C private rev-parse HEAD) -ne '6ffb7459fb90014af3f20c47881cfa5993cfae33') { throw 'Source pin mismatch' }
       - name: Reconstruct, build, run affected tests and install final QA payload
         shell: pwsh
         run: python -B private/windows-sync-integration-qa/main_candidate/ci_build.py
@@ -59,3 +59,11 @@ jobs:
           if-no-files-found: error
           retention-days: 14
           compression-level: 0
+      - name: Preserve sanitized build diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HANNA-R6-Candidate-Build-Diagnostics
+          path: candidate/reports/
+          if-no-files-found: warn
+          retention-days: 7
