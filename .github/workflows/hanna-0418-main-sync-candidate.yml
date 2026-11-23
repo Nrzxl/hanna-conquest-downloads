@@ -211,7 +211,7 @@ jobs:
             'https://github.com/Nrzxl/hanna-conquest-downloads/releases/download/v0.4.17-b10360-preview/HANNA-conquest-0.4.17-ORIGINAL-HOMOLOGACAO.apk' \
             -o old.apk
           echo '0754624ce26899d920dd479426225f4cfc77b9869adc28f23afd8f13d8fdb3ba  old.apk' | sha256sum -c -
-          (cd candidate && sha256sum -c HANNA-conquest-0.4.18-b10361-ORIGINAL-CANDIDATE.apk.sha256)
+          sha256sum -c candidate/HANNA-conquest-0.4.18-b10361-ORIGINAL-CANDIDATE.apk.sha256
       - name: Boot official 0.4.17, upgrade without uninstall, boot candidate API29
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -258,7 +258,7 @@ jobs:
             'https://github.com/Nrzxl/hanna-conquest-downloads/releases/download/v0.4.17-b10360-preview/HANNA-conquest-0.4.17-ORIGINAL-HOMOLOGACAO.apk' \
             -o old.apk
           echo '0754624ce26899d920dd479426225f4cfc77b9869adc28f23afd8f13d8fdb3ba  old.apk' | sha256sum -c -
-          (cd candidate && sha256sum -c HANNA-conquest-0.4.18-b10361-ORIGINAL-CANDIDATE.apk.sha256)
+          sha256sum -c candidate/HANNA-conquest-0.4.18-b10361-ORIGINAL-CANDIDATE.apk.sha256
       - name: Boot, upgrade in place and restart on API35
         uses: reactivecircus/android-emulator-runner@v2
         with:
