@@ -1,8 +1,8 @@
-name: HANNA Sync Mobile UI Integration QA (no OTA)
+name: HANNA Sync Mobile UI Dialog Hotfix QA (no OTA)
 
 on:
   push:
-    branches: [qa/hanna-sync-mobile-ui-20261120]
+    branches: [qa/hanna-sync-mobile-ui-dialog-hotfix-20261123]
     paths:
       - .github/workflows/hanna-sync-mobile-ui-qa.yml
 
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: hanna-sync-ui-integration-qa-only
+  group: hanna-sync-ui-dialog-hotfix-qa-only
   cancel-in-progress: false
 
 jobs:
@@ -20,13 +20,13 @@ jobs:
     timeout-minutes: 45
     env:
       HANNA_SYNC_QA_ISOLATED: '1'
-      HANNA_SYNC_QA_UI_V1: '1'
+      HANNA_SYNC_QA_UI_V2: '1'
     steps:
       - name: Checkout pinned Flutter UI integration source
         uses: actions/checkout@v4
         with:
           repository: Nrzxl/hanna-conquest-mobile
-          ref: ffd26cd0a7e27b9b89e6517cf1a41317f3b151aa
+          ref: 61d675f66a50413b7c1bcb17246f0bb6f663f34c
           token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
           persist-credentials: false
           path: source
@@ -35,13 +35,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C source rev-parse HEAD)" = 'ffd26cd0a7e27b9b89e6517cf1a41317f3b151aa'
+          test "$(git -C source rev-parse HEAD)" = '61d675f66a50413b7c1bcb17246f0bb6f663f34c'
           test -f source/lib/sync/hanna_sync_ui_qa.dart
           test -f source/lib/sync/hanna_sync_ui_qa_widgets.dart
           test -f source/test/hanna_sync_ui_qa_test.dart
           test -f source/docs/qa/20261120-mobile-sync-ui/README.md
           grep -q 'HANNA_SYNC_UI_QA' source/lib/sync/hanna_sync_ui_qa.dart
-          grep -q 'syncqa.ui1' source/android/app/build.gradle.kts
+          grep -q 'syncqa.ui2' source/android/app/build.gradle.kts
           python3 - <<'PY'
           import json,os
           from pathlib import Path
@@ -73,6 +73,7 @@ jobs:
           set -euo pipefail
           flutter analyze
           flutter test test/hanna_sync_ui_qa_test.dart
+          flutter test test/hanna_sync_ui_qa_dialog_lifecycle_test.dart
           flutter test
 
       - name: Build isolated, parallel-installable Android UI QA APK
@@ -81,7 +82,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$HANNA_SYNC_QA_ISOLATED" = '1'
-          test "$HANNA_SYNC_QA_UI_V1" = '1'
+          test "$HANNA_SYNC_QA_UI_V2" = '1'
           flutter build apk --debug \
             --dart-define=HANNA_SYNC_SUPABASE_URL=https://wbkfrldzuasicmtmndvd.supabase.co \
             --dart-define=HANNA_SYNC_SUPABASE_PUBLISHABLE_KEY="$HANNA_QA_PUBLISHABLE" \
@@ -89,22 +90,22 @@ jobs:
             --dart-define=HANNA_SYNC_UI_QA=true
           test -s build/app/outputs/flutter-apk/app-debug.apk
           mkdir -p ../qa-out
-          cp build/app/outputs/flutter-apk/app-debug.apk ../qa-out/HANNA_Sync_UI_Integration_QA_debug.apk
+          cp build/app/outputs/flutter-apk/app-debug.apk ../qa-out/HANNA_Sync_UI_Dialog_Hotfix_2_QA_debug.apk
 
       - name: Inspect package ID, manifest, hashes and provenance
         shell: bash
         run: |
           set -euo pipefail
-          APK=qa-out/HANNA_Sync_UI_Integration_QA_debug.apk
+          APK=qa-out/HANNA_Sync_UI_Dialog_Hotfix_2_QA_debug.apk
           AAPT=$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)
           test -x "$AAPT"
-          "$AAPT" dump badging "$APK" | grep -F "package: name='com.example.hanna_conquest_app.syncqa.ui1'"
+          "$AAPT" dump badging "$APK" | grep -F "package: name='com.example.hanna_conquest_app.syncqa.ui2'"
           {
-            echo 'HANNA Conquest Mobile Sync UI Integration QA-only'
-            echo 'Source SHA: ffd26cd0a7e27b9b89e6517cf1a41317f3b151aa'
+            echo 'HANNA Conquest Mobile Sync UI2 Dialog Hotfix QA-only'
+            echo 'Source SHA: 61d675f66a50413b7c1bcb17246f0bb6f663f34c'
             echo 'Base SHA: 92316e25d93666186c4c83804e3f1969ceaa396e'
             echo "GitHub Actions: https://github.com/Nrzxl/hanna-conquest-downloads/actions/runs/$GITHUB_RUN_ID"
-            echo 'Package: com.example.hanna_conquest_app.syncqa.ui1'
+            echo 'Package: com.example.hanna_conquest_app.syncqa.ui2'
             echo 'Signing: DEBUG only, separate app, no personal install/update'
             echo 'HANNA_SYNC_UI_QA=true and HANNA_SYNC_EXPERIMENTAL_ENABLED=true'
             echo 'Backend: wbkfrldzuasicmtmndvd.supabase.co (existing v1 only)'
@@ -118,7 +119,7 @@ jobs:
       - name: Upload APK as QA workflow artifact only
         uses: actions/upload-artifact@v4
         with:
-          name: HANNA-Sync-UI-Integration-QA-${{ github.run_number }}
+          name: HANNA-Sync-UI2-Dialog-Hotfix-QA-${{ github.run_number }}
           path: qa-out/
           if-no-files-found: error
           retention-days: 7
