@@ -1,0 +1,61 @@
+name: HANNA Windows R6 main candidate (no Release or OTA)
+
+on:
+  push:
+    branches: [qa/windows-r6-main-candidate-20261123]
+    paths: [.github/workflows/hanna-windows-main-candidate.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hanna-windows-main-r6-candidate
+  cancel-in-progress: false
+
+jobs:
+  build-test-candidate:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      ASH_NETWORK_DISABLED: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONIOENCODING: utf8
+    steps:
+      - name: Preserve exact Git blob bytes
+        shell: pwsh
+        run: git config --global core.autocrlf false
+      - name: Checkout reviewed Windows main integration
+        uses: actions/checkout@v4
+        with:
+          repository: Nrzxl/hanna-conquest-mobile
+          ref: 8219b0cd8cae95a98e13e2d53b691086efd3a1c6
+          token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
+          persist-credentials: false
+          path: private
+      - name: Checkout immutable approved R6 resources and runtime
+        uses: actions/checkout@v4
+        with:
+          repository: Nrzxl/hanna-conquest-downloads
+          ref: 99835da58af79f783963f9385fad4aab326c9646
+          persist-credentials: false
+          path: approved_base
+      - name: Host Python only for verified runtime bootstrap
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify private source commit
+        shell: pwsh
+        run: |
+          if ((git -C private rev-parse HEAD) -ne '8219b0cd8cae95a98e13e2d53b691086efd3a1c6') { throw 'Source pin mismatch' }
+      - name: Reconstruct, validate, build, regress, install and restore QA only
+        shell: pwsh
+        run: python -B private/windows-sync-integration-qa/main_candidate/ci_build.py
+      - name: Upload candidate artifact only
+        uses: actions/upload-artifact@v4
+        with:
+          name: HANNA-R6-26.1.11-Windows-Main-Candidate
+          path: candidate-delivery/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
