@@ -198,7 +198,11 @@ jobs:
     name: Android 10 emulator in-place upgrade smoke
     needs: signed-validation
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 50
+    env:
+      # The hosted Linux runner has no /dev/kvm. Android Emulator 37+
+      # requires explicit opt-in for TCG software CPU emulation.
+      ANDROID_I_WANT_MY_TCG: 'yes'
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -219,6 +223,9 @@ jobs:
           target: google_apis
           arch: x86_64
           disable-animations: true
+          # TCG is much slower than KVM. An emulator boot is NOT app boot proof.
+          emulator-boot-timeout: 1200
+          cores: 2
           script: |
             set -euo pipefail
             PKG=com.example.hanna_conquest_app
@@ -245,7 +252,9 @@ jobs:
     name: Android modern emulator in-place upgrade smoke
     needs: signed-validation
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 50
+    env:
+      ANDROID_I_WANT_MY_TCG: 'yes'
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -266,6 +275,9 @@ jobs:
           target: google_apis
           arch: x86_64
           disable-animations: true
+          # TCG is much slower than KVM. An emulator boot is NOT app boot proof.
+          emulator-boot-timeout: 1200
+          cores: 2
           script: |
             set -euo pipefail
             PKG=com.example.hanna_conquest_app
