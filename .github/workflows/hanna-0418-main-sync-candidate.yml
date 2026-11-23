@@ -216,6 +216,33 @@ jobs:
             -o old.apk
           echo '0754624ce26899d920dd479426225f4cfc77b9869adc28f23afd8f13d8fdb3ba  old.apk' | sha256sum -c -
           sha256sum -c candidate/HANNA-conquest-0.4.18-b10361-ORIGINAL-CANDIDATE.apk.sha256
+      # android-emulator-runner executes each line of 'script' in a separate sh -c.
+      # Keep variables, set -e, and UID checks in ONE persistent Bash process.
+      - name: Prepare upgrade-api29.sh as one Bash process
+        shell: bash
+        run: |
+          cat > upgrade-api29.sh <<'HANNA_SMOKE_SCRIPT'
+          set -euo pipefail
+          PKG=com.example.hanna_conquest_app
+          adb install old.apk
+          adb shell am start -W -n "$PKG/.MainActivity"
+          sleep 8
+          adb shell pidof "$PKG"
+          BEFORE="$(adb shell pm list packages -U "$PKG" | tr -d '\r')"
+          adb shell am force-stop "$PKG"
+          adb install -r candidate/HANNA-conquest-0.4.18-b10361-ORIGINAL-CANDIDATE.apk
+          AFTER="$(adb shell pm list packages -U "$PKG" | tr -d '\r')"
+          test "$BEFORE" = "$AFTER"
+          adb logcat -c
+          adb shell am start -W -n "$PKG/.MainActivity"
+          sleep 12
+          adb shell pidof "$PKG"
+          if adb logcat -d -v brief | grep -E 'FATAL EXCEPTION|Process: com.example.hanna_conquest_app.*has died'; then
+            echo 'Fatal error after in-place upgrade'
+            exit 1
+          fi
+          echo 'API29 PASS: old/new same Android UID, app process alive, no observed fatal log'
+          HANNA_SMOKE_SCRIPT
       - name: Boot official 0.4.17, upgrade without uninstall, boot candidate API29
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -226,28 +253,7 @@ jobs:
           # TCG is much slower than KVM. An emulator boot is NOT app boot proof.
           emulator-boot-timeout: 1200
           cores: 2
-          script: |
-            set -euo pipefail
-            PKG=com.example.hanna_conquest_app
-            adb install old.apk
-            adb shell am start -W -n "$PKG/.MainActivity"
-            sleep 8
-            adb shell pidof "$PKG"
-            BEFORE="$(adb shell pm list packages -U "$PKG" | tr -d '\r')"
-            adb shell am force-stop "$PKG"
-            adb install -r candidate/HANNA-conquest-0.4.18-b10361-ORIGINAL-CANDIDATE.apk
-            AFTER="$(adb shell pm list packages -U "$PKG" | tr -d '\r')"
-            test "$BEFORE" = "$AFTER"
-            adb logcat -c
-            adb shell am start -W -n "$PKG/.MainActivity"
-            sleep 12
-            adb shell pidof "$PKG"
-            if adb logcat -d -v brief | grep -E 'FATAL EXCEPTION|Process: com.example.hanna_conquest_app.*has died'; then
-              echo 'Fatal error after in-place upgrade'
-              exit 1
-            fi
-            echo 'API29 PASS: old/new same Android UID, app process alive, no observed fatal log'
-
+          script: bash upgrade-api29.sh
   emulator-modern:
     name: Android modern emulator in-place upgrade smoke
     needs: signed-validation
@@ -268,6 +274,33 @@ jobs:
             -o old.apk
           echo '0754624ce26899d920dd479426225f4cfc77b9869adc28f23afd8f13d8fdb3ba  old.apk' | sha256sum -c -
           sha256sum -c candidate/HANNA-conquest-0.4.18-b10361-ORIGINAL-CANDIDATE.apk.sha256
+      # android-emulator-runner executes each line of 'script' in a separate sh -c.
+      # Keep variables, set -e, and UID checks in ONE persistent Bash process.
+      - name: Prepare upgrade-api35.sh as one Bash process
+        shell: bash
+        run: |
+          cat > upgrade-api35.sh <<'HANNA_SMOKE_SCRIPT'
+          set -euo pipefail
+          PKG=com.example.hanna_conquest_app
+          adb install old.apk
+          adb shell am start -W -n "$PKG/.MainActivity"
+          sleep 7
+          adb shell pidof "$PKG"
+          BEFORE="$(adb shell pm list packages -U "$PKG" | tr -d '\r')"
+          adb shell am force-stop "$PKG"
+          adb install -r candidate/HANNA-conquest-0.4.18-b10361-ORIGINAL-CANDIDATE.apk
+          AFTER="$(adb shell pm list packages -U "$PKG" | tr -d '\r')"
+          test "$BEFORE" = "$AFTER"
+          adb logcat -c
+          adb shell am start -W -n "$PKG/.MainActivity"
+          sleep 12
+          adb shell pidof "$PKG"
+          if adb logcat -d -v brief | grep -E 'FATAL EXCEPTION|Process: com.example.hanna_conquest_app.*has died'; then
+            echo 'Fatal exception observed'
+            exit 1
+          fi
+          echo 'API35 PASS: old/new same Android UID, process alive after upgrade'
+          HANNA_SMOKE_SCRIPT
       - name: Boot, upgrade in place and restart on API35
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -278,24 +311,4 @@ jobs:
           # TCG is much slower than KVM. An emulator boot is NOT app boot proof.
           emulator-boot-timeout: 1200
           cores: 2
-          script: |
-            set -euo pipefail
-            PKG=com.example.hanna_conquest_app
-            adb install old.apk
-            adb shell am start -W -n "$PKG/.MainActivity"
-            sleep 7
-            adb shell pidof "$PKG"
-            BEFORE="$(adb shell pm list packages -U "$PKG" | tr -d '\r')"
-            adb shell am force-stop "$PKG"
-            adb install -r candidate/HANNA-conquest-0.4.18-b10361-ORIGINAL-CANDIDATE.apk
-            AFTER="$(adb shell pm list packages -U "$PKG" | tr -d '\r')"
-            test "$BEFORE" = "$AFTER"
-            adb logcat -c
-            adb shell am start -W -n "$PKG/.MainActivity"
-            sleep 12
-            adb shell pidof "$PKG"
-            if adb logcat -d -v brief | grep -E 'FATAL EXCEPTION|Process: com.example.hanna_conquest_app.*has died'; then
-              echo 'Fatal exception observed'
-              exit 1
-            fi
-            echo 'API35 PASS: old/new same Android UID, process alive after upgrade'
+          script: bash upgrade-api35.sh
