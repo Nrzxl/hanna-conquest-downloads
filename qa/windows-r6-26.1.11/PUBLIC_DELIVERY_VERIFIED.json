@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "release": "https://github.com/Nrzxl/hanna-conquest-downloads/releases/tag/v26.1.11",
+  "installerURL": "https://github.com/Nrzxl/hanna-conquest-downloads/releases/download/v26.1.11/HANNA_conquest_Setup_R6_26_1_11_x64.exe",
+  "installerBytes": 59627520,
+  "installerSHA256": "d514747c8b2cebb61e6cb07148fdc48912b7bc74a63805fd0b6200d20ca06f1e",
+  "updater": {
+    "version": "v26.1.11",
+    "asset": "HANNA_CONQUEST_R6_MAIN_26_1_11_WINDOWS.zip",
+    "bytes": 1025331,
+    "sha256": "39405b76aefd466595ed81958bb56bf81ebbbfae8353241cebae86829a0cd15e",
+    "liveDiscovery": true,
+    "anonymousDownload": true,
+    "crcAndManifest": "PASS",
+    "noUpdateWhenCurrent": true,
+    "testedTransport": "26.1.11 public updater queried with current-version input 26.1.9; old 26.1.9 UI requires Setup"
+  },
+  "anonymousInstallerDownload": true,
+  "personalInstallationWritten": false,
+  "personalImport": false,
+  "personal_sync_activation_allowed": false,
+  "deployment_verified": false,
+  "verifiedAtUtc": "2026-11-24T11:05:08.933385+00:00"
+}
