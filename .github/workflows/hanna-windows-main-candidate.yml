@@ -1,4 +1,4 @@
-name: HANNA Windows R6 main candidate (no Release or OTA)
+name: HANNA Windows R6 main program upgrade - protected candidate
 
 on:
   push:
@@ -25,11 +25,11 @@ jobs:
       - name: Preserve exact Git blob bytes
         shell: pwsh
         run: git config --global core.autocrlf false
-      - name: Checkout reviewed Windows main integration
+      - name: Checkout reviewed Windows main program
         uses: actions/checkout@v4
         with:
           repository: Nrzxl/hanna-conquest-mobile
-          ref: 6ffb7459fb90014af3f20c47881cfa5993cfae33
+          ref: 4124465783ba48f85403f713be1f60a2f02f07e5
           token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
           persist-credentials: false
           path: private
@@ -40,22 +40,22 @@ jobs:
           ref: 99835da58af79f783963f9385fad4aab326c9646
           persist-credentials: false
           path: approved_base
-      - name: Host Python only for verified runtime bootstrap
+      - name: Host Python for verified runtime bootstrap only
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - name: Verify private source commit
         shell: pwsh
         run: |
-          if ((git -C private rev-parse HEAD) -ne '6ffb7459fb90014af3f20c47881cfa5993cfae33') { throw 'Source pin mismatch' }
-      - name: Reconstruct, build, run affected tests and install final QA payload
+          if ((git -C private rev-parse HEAD) -ne '4124465783ba48f85403f713be1f60a2f02f07e5') { throw 'Source pin mismatch' }
+      - name: Compile full Setup and validate affected tests, upgrade, rollback and uninstall
         shell: pwsh
-        run: python -B private/windows-sync-integration-qa/main_candidate/ci_build.py
-      - name: Upload candidate artifact only
+        run: python -B private/windows-sync-integration-qa/main_candidate/official/ci_official.py
+      - name: Upload protected candidate artifact only - no Release or OTA
         uses: actions/upload-artifact@v4
         with:
-          name: HANNA-R6-26.1.11-Windows-Main-Candidate
-          path: candidate-delivery/
+          name: HANNA-R6-26.1.11-Main-Program-Upgrade-Review
+          path: official-delivery/
           if-no-files-found: error
           retention-days: 14
           compression-level: 0
@@ -63,7 +63,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: HANNA-R6-Candidate-Build-Diagnostics
-          path: candidate/reports/
+          name: HANNA-R6-Main-Upgrade-Diagnostics
+          path: official-build/official/reports/
           if-no-files-found: warn
           retention-days: 7
