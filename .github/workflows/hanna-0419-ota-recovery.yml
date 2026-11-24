@@ -1,0 +1,49 @@
+name: HANNA 0.4.19 - Recover verified official in-app updater
+# One-time recovery for main workflow #45473038586: all signed gates and the
+# original GitHub Release passed, but publish-ota was absent from the job graph.
+# Reuse the exact independent production verifier, not a direct feed edit.
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/hanna-0419-ota-recovery.yml
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: hanna-ota-verified-promotion
+  cancel-in-progress: false
+jobs:
+  publish-verified-ota:
+    if: ${{ github.repository == 'Nrzxl/hanna-conquest-downloads' && github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+      HANNA_RELEASE_TAG: v0.4.19-b10362-preview
+      HANNA_SOURCE_RUN_ID: '45473038586'
+      HANNA_RELEASE_NOTES: 'HANNA 0.4.19: conquistas Steam e RetroAchievements mais legíveis, filtros, busca e progresso. Diagnóstico de tradução PT-BR local; confirme o funcionamento no aparelho. Atualize por cima sem desinstalar. Sync pessoal permanece protegido.'
+    steps:
+      - name: Checkout official updater and unmodified signing verifier
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Prepare Android SDK for certificate and package verification
+        uses: android-actions/setup-android@v4
+      - name: Independently verify release SHA, source CI, original Android certificate and monotonic build
+        run: python3 .github/scripts/hanna_ota_promote_verified.py
+      - name: Commit only independently verified update.json
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          if git diff --quiet -- update.json; then
+            echo 'Official feed already matches verified release; no commit required.'
+            exit 0
+          fi
+          git add update.json
+          git -c user.name='github-actions[bot]' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              commit -m 'release(android): promote independently verified HANNA 0.4.19 OTA'
+          git push origin HEAD:main
+          echo 'HANNA 0.4.19 published in official in-app updater.'
