@@ -1,0 +1,198 @@
+{
+  "authorization": {
+    "authorized": true,
+    "userAnswer": "Autorizar a liberação oficial somente do programa Windows",
+    "scope": "Program-only R6 26.1.11 distribution and installer compatibility with existing 26.1.9",
+    "reviewedPreparationExecuted": true,
+    "personalInstallationWritten": false,
+    "personalImport": false,
+    "personal_sync_activation_allowed": false,
+    "deployment_verified": false,
+    "recordedAtUtc": "2026-11-24T01:43:07.703672+00:00"
+  },
+  "ci": {
+    "version": "26.1.11",
+    "file": "HANNA_R6_26_1_11_MAIN_PROGRAM_UPDATE_WINDOWS.zip",
+    "bytes": 62612707,
+    "sha256": "e036561f71905076dfe9c4d3a09f6ade1ff1a982eb4c4d6bc6898f996eb1fc84",
+    "setupSHA256": "d514747c8b2cebb61e6cb07148fdc48912b7bc74a63805fd0b6200d20ca06f1e",
+    "deltaSHA256": "39405b76aefd466595ed81958bb56bf81ebbbfae8353241cebae86829a0cd15e",
+    "crc": "PASS",
+    "sourceBuild": {
+      "release": "Preview 26 R1 R6",
+      "sha256": "856d74051d820caa526753933d61a763b5c6a8e25af5fe81a8762c9c89fcbbcd",
+      "files": 4529,
+      "algorithm": "portable-content-v2",
+      "scope": "arquivos distribuíveis; sem caches, bancos locais, estado do usuário, evidência gerada ou metadados autorreferentes"
+    },
+    "CIaffectedTests": 58,
+    "CIinstaller": "PASS",
+    "sanitizationTextFiles": 1327,
+    "credentialMatches": 0,
+    "personalDataFiles": 0,
+    "stablePublication": "PENDING_EXACT_DOWNLOAD_QA",
+    "deployment_verified": false,
+    "personal_sync_activation_allowed": false,
+    "programUpdateExplicitlyAuthorized": true,
+    "codeSigning": "NotSigned",
+    "status": "PASS",
+    "artifactDownloadedVerified": true,
+    "artifactId": 14881113260,
+    "runId": 45307569591,
+    "sourceCommit": "b1f1a9d1de7d814729b16a61eb43f3149ed67fd1",
+    "workflowCommit": "486481dac0934447eceea78fa670f1ecb49130e8",
+    "outerSHA256": "2c32babeef62d60135469c1ec0d4ac46bc2665a49f003c266147036be4279d65",
+    "outerBytes": 62614156,
+    "manifestHashesVerified": 62,
+    "personalInstallationWritten": false
+  },
+  "exactDownloadQA": {
+    "status": "PASS",
+    "PASS": 14,
+    "FAIL": 0,
+    "checks": [
+      "real_cumulative_updates_root_exe_and_code",
+      "cumulative_profile_bytes_unchanged",
+      "cumulative_full_program_registry_marker_rollback",
+      "final_setup_or_reapply",
+      "final_setup_or_reapply",
+      "final_setup_injected_fault_restores",
+      "all_final_install_profile_bytes_unchanged",
+      "final_full_exe_probe",
+      "actual_recovery_control_three_native_viewports",
+      "21_step_final_standard_exe_journey_and_capture_hashes",
+      "final_exact_setup_rollback_26.1.11",
+      "final_exact_setup_rollback_26.1.9",
+      "final_actual_qa_uninstall_preserves_profile",
+      "personal_installation_untouched"
+    ],
+    "exactSetupSHA256": "d514747c8b2cebb61e6cb07148fdc48912b7bc74a63805fd0b6200d20ca06f1e",
+    "exactDeltaSHA256": "39405b76aefd466595ed81958bb56bf81ebbbfae8353241cebae86829a0cd15e",
+    "standardExeJourney": "21/21",
+    "capturesVerified": 21,
+    "callbackErrors": [],
+    "personalWrites": false,
+    "deployment_verified": false,
+    "harnessResumes": [
+      "exact isolated folder allowlist",
+      "resume profile variable",
+      "resume QA key variable"
+    ],
+    "productCodeChangedAfterCI": false
+  },
+  "embeddedPayload": {
+    "status": "PASS",
+    "crc": "PASS",
+    "manifestHashes": 6660,
+    "runtimeFiles": 2085,
+    "personalInstallationWritten": false
+  },
+  "exeInspection": {
+    "personalInstallationWritten": false,
+    "signature": "NotSigned",
+    "mainProgramMarker": true,
+    "version": "26.1.11.0",
+    "payloadSHA256": "649545f50669a7540faa29440704278d97e1e0238abd2cd83047a3e5c4f979fc",
+    "entrypointInvoked": false
+  },
+  "storage": {
+    "status": "BLOCKED",
+    "volumes": [
+      {
+        "volume": "C:",
+        "free": 7466274816,
+        "required": 490847854,
+        "reserve": 7651259719,
+        "remainingAfterUpdate": 6975426962,
+        "status": "BLOCKED"
+      },
+      {
+        "volume": "D:",
+        "free": 22600482816,
+        "required": 5933133342,
+        "reserve": 8589934592,
+        "remainingAfterUpdate": 16667349474,
+        "status": "PASS"
+      }
+    ],
+    "exactOfficialProgramBytes": 111206199,
+    "currentProfileBytes": 5304560646,
+    "currentProfileFiles": 12457,
+    "personalDataChanged": false,
+    "personalInstallationWritten": false,
+    "calculatedAtUtc": "2026-11-24T10:57:43.342197+00:00",
+    "deployment_verified": false,
+    "installerRechecksBeforeApplying": true
+  },
+  "previousTemporaryRelocation": {
+    "reserveC": 7651259719,
+    "personalDataChanged": false,
+    "sourcesPreserved": true,
+    "freeC": 8201740288,
+    "relocated": [
+      {
+        "kind": "reproducible_build_staging",
+        "manifestSHA256": "bd17470bddb3faaa7dffac290048cf71812e4ae87a83a6761810c29260ccfd45",
+        "bytes": 111205157,
+        "files": 6661,
+        "verified": true
+      },
+      {
+        "kind": "reproducible_build_staging",
+        "manifestSHA256": "7791b0c0ee12763c570b2bfe26cd7d6f7e2e6c39c868b30639dbd62aa3c0c326",
+        "bytes": 59183855,
+        "files": 1,
+        "verified": true
+      },
+      {
+        "kind": "reproducible_build_staging",
+        "manifestSHA256": "74e189c4ddba189b116c3353974be4840d226f34ca45873f9cff08d7a64290c4",
+        "bytes": 59482975,
+        "files": 1,
+        "verified": true
+      }
+    ],
+    "bytesRecovered": 252112896,
+    "status": "PASS",
+    "finalPackagesPreserved": true,
+    "deployment_verified": false,
+    "backupsPreserved": true
+  },
+  "programPublicationGate": "PASS",
+  "personalInstallationGate": "BLOCKED_STORAGE_C",
+  "additionalQACleanup": "PENDING_USER_AUTHORIZATION_NO_ADDITIONAL_COPIES_REMOVED",
+  "firstUpdatePath": {
+    "version": "26.1.11",
+    "from": "26.1.9",
+    "firstTransition": "OFFICIAL_SETUP_UPDATES_EXISTING_INSTALLATION",
+    "sameApplication": true,
+    "secondPermanentApplication": false,
+    "old269Updater": {
+      "inspection": "Read-only inspection of the actual installed code",
+      "repository": "Nrzxl/hanna-conquest-updates",
+      "transport": "private",
+      "extractsRootPayload": false,
+      "automaticTransitionViaOldUI": "NOT_SUPPORTED_BY_THIS_PUBLIC_RELEASE",
+      "requiredAction": "Use the verified official Setup once; do not claim that the old private updater discovers the new public Release"
+    },
+    "new2611Updater": {
+      "repository": "Nrzxl/hanna-conquest-downloads",
+      "transport": "public_without_token",
+      "futureUpdates": "Settings / Updates, preserving the existing updater engine",
+      "livePublicReleaseDiscovery": "PENDING_PUBLICATION"
+    },
+    "personalInstallationWritten": false,
+    "personalImport": false,
+    "deployment_verified": false
+  },
+  "historicalEvidence": {
+    "localRegression1050": "PASS_PRESERVED_NOT_RERUN",
+    "diagnosticMaster304": "PASS_PRESERVED_NOT_RERUN",
+    "oldGraphicsCI": "FAIL_RUNNER_VIEWPORT_PRESERVED",
+    "affectedGraphicsLocal9": "PASS_UNCHANGED_CRITERIA"
+  },
+  "personalInstallationWritten": false,
+  "personalImport": false,
+  "personal_sync_activation_allowed": false,
+  "deployment_verified": false
+}

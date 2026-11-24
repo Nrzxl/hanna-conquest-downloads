@@ -1,0 +1,41 @@
+name: Publish verified Windows R6 26.1.11 program only
+
+on:
+  push:
+    branches: [qa/windows-r6-main-candidate-20261123]
+    paths:
+      - .github/workflows/publish-windows-26-1-11.yml
+      - ci/publish_windows_26_1_11.py
+      - ci/windows-26.1.11-final-verification.json
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hanna-windows-r6-26-1-11-official-publication
+  cancel-in-progress: false
+
+jobs:
+  publish-program-only:
+    if: github.repository == 'Nrzxl/hanna-conquest-downloads' && github.ref == 'refs/heads/qa/windows-r6-main-candidate-20261123'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Retrieve immutable approved official program artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: HANNA-R6-26.1.11-Main-Program-Official
+          repository: Nrzxl/hanna-conquest-downloads
+          run-id: 45307569591
+          github-token: ${{ github.token }}
+          path: verified-input
+      - name: Check gates and publish exact Windows bytes without Android OTA changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 ci/publish_windows_26_1_11.py
