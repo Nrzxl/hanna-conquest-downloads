@@ -1,4 +1,4 @@
-name: HANNA Windows R6 main program upgrade - protected candidate
+name: HANNA Windows R6 main program upgrade - authorized program-only final build
 
 on:
   push:
@@ -29,7 +29,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Nrzxl/hanna-conquest-mobile
-          ref: 72dd611676dbf4637ac0b0440462ab73b616df27
+          ref: b1f1a9d1de7d814729b16a61eb43f3149ed67fd1
           token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
           persist-credentials: false
           path: private
@@ -47,14 +47,14 @@ jobs:
       - name: Verify private source commit
         shell: pwsh
         run: |
-          if ((git -C private rev-parse HEAD) -ne '72dd611676dbf4637ac0b0440462ab73b616df27') { throw 'Source pin mismatch' }
+          if ((git -C private rev-parse HEAD) -ne 'b1f1a9d1de7d814729b16a61eb43f3149ed67fd1') { throw 'Source pin mismatch' }
       - name: Compile full Setup and validate affected tests, upgrade, rollback and uninstall
         shell: pwsh
         run: python -B private/windows-sync-integration-qa/main_candidate/official/ci_official.py
-      - name: Upload protected candidate artifact only - no Release or OTA
+      - name: Upload final program artifact for independent verification
         uses: actions/upload-artifact@v4
         with:
-          name: HANNA-R6-26.1.11-Main-Program-Upgrade-Review
+          name: HANNA-R6-26.1.11-Main-Program-Official
           path: official-delivery/
           if-no-files-found: error
           retention-days: 14
