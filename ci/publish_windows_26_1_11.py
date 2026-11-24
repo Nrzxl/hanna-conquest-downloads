@@ -81,22 +81,33 @@ No computador de desenvolvimento, a instalação física ainda está bloqueada p
 Sem alteração de OTA Android, merge, importação pessoal ou R7. Código revisado na PR #36, que permanece draft.
 '''
     Path('release_notes.md').write_text(notes,encoding='utf8')
-    existing=subprocess.run(['gh','release','view',TAG,'--repo',REPO,'--json','tagName'],capture_output=True,text=True)
-    if existing.returncode==0:raise RuntimeError('Release already exists; inspect it before any retry. No overwrite.')
-    gh('release','create',TAG,'--repo',REPO,'--target',TARGET,'--title','HANNA conquest Windows R6 26.1.11',
-       '--notes-file','release_notes.md','--draft','--latest=false')
-    files=[str(p) for p in sorted(out.iterdir()) if p.is_file()]
-    gh('release','upload',TAG,*files,'--repo',REPO)
-    published=api('releases/tags/'+TAG)
-    assert published['draft'] is True and published['prerelease'] is False
+    # GitHub's tag lookup can return 404 for a draft whose tag is not created
+    # yet. Resolve the already-uploaded draft by its immutable numeric ID.
+    matches=[row for row in api('releases?per_page=100') if row['tag_name']==TAG]
+    assert len(matches)<=1,'Multiple matching Releases; inspect without overwriting'
+    if not matches:
+        gh('release','create',TAG,'--repo',REPO,'--target',TARGET,'--title','HANNA conquest Windows R6 26.1.11',
+           '--notes-file','release_notes.md','--draft','--latest=false')
+        matches=[row for row in api('releases?per_page=100') if row['tag_name']==TAG]
+    assert len(matches)==1
+    published=api('releases/'+str(matches[0]['id']))
+    assert published['target_commitish']==TARGET and published['name']=='HANNA conquest Windows R6 26.1.11'
+    assert published['prerelease'] is False
+    uploaded={a['name']:a for a in published['assets']}
+    files=[str(p) for p in sorted(out.iterdir()) if p.is_file() and p.name not in uploaded]
+    if files:
+        assert published['draft'] is True
+        gh('release','upload',TAG,*files,'--repo',REPO)
+        published=api('releases/'+str(published['id']))
     assets={a['name']:a for a in published['assets']}
     expected={p.name:digest(p) for p in out.iterdir() if p.is_file()}
     assert set(assets)==set(expected)
     for name,pin in expected.items():
         assert assets[name]['state']=='uploaded' and assets[name]['digest']=='sha256:'+pin
         assert assets[name]['size']==(out/name).stat().st_size
-    gh('release','edit',TAG,'--repo',REPO,'--draft=false','--latest=false')
-    result=api('releases/tags/'+TAG)
+    if published['draft']:
+        gh('api','--method','PATCH','repos/'+REPO+'/releases/'+str(published['id']),'-F','draft=false','-F','make_latest=false')
+    result=api('releases/'+str(published['id']))
     assert result['draft'] is False and result['prerelease'] is False
     print(json.dumps(dict(status='PUBLISHED_PROGRAM_ONLY',release=result['html_url'],source=SOURCE,
         assets={a['name']:dict(bytes=a['size'],digest=a['digest']) for a in result['assets']},
