@@ -29,7 +29,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Nrzxl/hanna-conquest-mobile
-          ref: 4124465783ba48f85403f713be1f60a2f02f07e5
+          ref: 72dd611676dbf4637ac0b0440462ab73b616df27
           token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
           persist-credentials: false
           path: private
@@ -47,7 +47,7 @@ jobs:
       - name: Verify private source commit
         shell: pwsh
         run: |
-          if ((git -C private rev-parse HEAD) -ne '4124465783ba48f85403f713be1f60a2f02f07e5') { throw 'Source pin mismatch' }
+          if ((git -C private rev-parse HEAD) -ne '72dd611676dbf4637ac0b0440462ab73b616df27') { throw 'Source pin mismatch' }
       - name: Compile full Setup and validate affected tests, upgrade, rollback and uninstall
         shell: pwsh
         run: python -B private/windows-sync-integration-qa/main_candidate/official/ci_official.py
