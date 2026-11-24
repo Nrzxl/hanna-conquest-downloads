@@ -1,0 +1,26 @@
+name: Record verified Windows R6 installation storage
+on:
+  push:
+    branches: [qa/windows-r6-main-candidate-20261123]
+    paths:
+      - .github/workflows/windows-r6-storage-proof.yml
+      - ci/update_windows_storage_notes.py
+      - qa/windows-r6-26.1.11/INSTALLATION_STORAGE_READY.json
+permissions:
+  contents: read
+jobs:
+  update-instructions-only:
+    if: github.repository == 'Nrzxl/hanna-conquest-downloads' && github.ref == 'refs/heads/qa/windows-r6-main-candidate-20261123'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Correct instructions without changing any published asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 ci/update_windows_storage_notes.py
+

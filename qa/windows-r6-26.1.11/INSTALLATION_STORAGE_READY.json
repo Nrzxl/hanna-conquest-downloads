@@ -1,0 +1,112 @@
+{
+  "status": "PASS",
+  "storage": {
+    "status": "PASS",
+    "volumes": [
+      {
+        "volume": "C:",
+        "free": 8340541440,
+        "required": 490847854,
+        "reserve": 7651259719,
+        "remainingAfterUpdate": 7849693586,
+        "status": "PASS"
+      },
+      {
+        "volume": "D:",
+        "free": 22539821056,
+        "required": 5933133342,
+        "reserve": 8589934592,
+        "remainingAfterUpdate": 16606687714,
+        "status": "PASS"
+      }
+    ],
+    "exactOfficialProgramBytes": 111206199,
+    "currentProfileBytes": 5304560646,
+    "currentProfileFiles": 12457,
+    "personalDataChanged": false,
+    "personalInstallationWritten": false,
+    "calculatedAtUtc": "2026-11-24T11:11:44.840172+00:00",
+    "deployment_verified": false,
+    "installerRechecksBeforeApplying": true
+  },
+  "authorization": {
+    "authorized": true,
+    "userAnswer": "Autorizar somente essas sete cópias QA de C: e os dois registros QA",
+    "scope": "Only the seven copied and SHA-256 verified old QA program directories listed in OBSOLETE_QA_PROGRAM_ARCHIVE.json, plus their two QA registration keys",
+    "archiveBytes": 770996750,
+    "allSevenCopiesMustRemainInD": true,
+    "personalInstallationMustRemainUntouched": true,
+    "qaProfilesAndDataBackupsMustRemainUntouched": true,
+    "finalPackagesMustRemainUntouched": true,
+    "deployment_verified": false
+  },
+  "archive": {
+    "copies": [
+      {
+        "files": 6659,
+        "manifestSHA256": "b39efcfdbef14b9580cae8d5d872e485d6732dbdf615dca9faf16604c4e62f3f",
+        "bytes": 110379924.0,
+        "relative": "install_qa\\Installed"
+      },
+      {
+        "files": 6653,
+        "manifestSHA256": "ee56e35e0214f73cc98f4d9570e0a22d91e52d3bb6d86a280f6a41d97bb155a8",
+        "bytes": 109945649.0,
+        "relative": "install_qa\\Installed.rollback-02d9c414"
+      },
+      {
+        "files": 6653,
+        "manifestSHA256": "f5765192ce10e7f9cd9633b2f5ddd6558a4301d780fc52b7dd68f335c11e4a0b",
+        "bytes": 109945649.0,
+        "relative": "install_qa\\Installed.rollback-27b248f9"
+      },
+      {
+        "files": 6659,
+        "manifestSHA256": "dea2c4e6451acc4cdec26270faa754f443836a6bee9796e9f4d143c349db4b76",
+        "bytes": 110379857.0,
+        "relative": "install_qa\\Installed.rollback-2c823be3"
+      },
+      {
+        "files": 6659,
+        "manifestSHA256": "05a6ff758c48f04cb9fba493b43dd66577415b4eb4b1519bc3c794fc64de1de9",
+        "bytes": 110379924.0,
+        "relative": "install_qa\\Installed.rollback-5d9c6c85"
+      },
+      {
+        "files": 6659,
+        "manifestSHA256": "982b3f8bd468d42ce0738a51475813be295ab8934068e89e2df53b1ac3da1e46",
+        "bytes": 110379857.0,
+        "relative": "install_qa\\Installed.rollback-e1c6ac61"
+      },
+      {
+        "files": 6658,
+        "manifestSHA256": "172bfd8a0fb1b7c69710a41bd818c5e418eca8940116ef0fecea6546d1cdf392",
+        "bytes": 109585890.0,
+        "relative": "update_qa\\Installed"
+      }
+    ],
+    "deployment_verified": false,
+    "status": "PASS_ARCHIVED_IN_D_QA_PROGRAM_COPIES_REMOVED_FROM_C",
+    "personalDataChanged": false,
+    "bytesRecovered": 878776320,
+    "freeC": 8340705280,
+    "originalQAProfilesAndDataBackupsPreservedInC": true,
+    "allProgramRecoveryCopiesPreservedInD": true
+  },
+  "afterQACleanup": {
+    "Status": "PASS",
+    "BothQAKeysRemoved": true,
+    "PhysicalAuthorizedRegistryRead": true,
+    "LimitedToolViewWasInconsistent": true,
+    "PersonalVersion": "26.1.9",
+    "PersonalProfileExists": true,
+    "QADataBackupStillPresent": true,
+    "QAProfileStillPresent": true,
+    "PersonalWrites": false,
+    "deployment_verified": false
+  },
+  "personalInstallationWritten": false,
+  "personalImport": false,
+  "personal_sync_activation_allowed": false,
+  "deployment_verified": false
+}

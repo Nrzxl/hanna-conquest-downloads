@@ -32,15 +32,17 @@ Cumulativo SHA-256: `39405b76aefd466595ed81958bb56bf81ebbbfae8353241cebae86829a0
 
 Os ajustes de retomada foram somente no roteiro QA (pasta isolada e variáveis); o código distribuído permaneceu idêntico ao CI. Etapas já aprovadas de instalação não foram repetidas. Regressão histórica 1.050 PASS e Diagnóstico Mestre 304 PASS preservados, não reexecutados nesta marcação. A falha gráfica histórica do runner permanece identificada como FAIL histórico; nove casos afetados passaram localmente sem relaxar critérios.
 
-## Instalação neste computador: BLOCKED
+## Armazenamento e instalação: PASS para preparar a atualização
 
-O programa pode ser distribuído com seus gates de integridade e recuperação aprovados; isso não autoriza nem executa a instalação pessoal. C: ainda não comporta a transação mantendo a reserva exigida. As margens não foram diminuídas. O instalador reavalia o espaço e recusa a atualização antes de alterar o perfil ou substituir arquivos se a reserva não for atendida.
+Após autorização explícita do usuário, somente as sete cópias antigas de programa QA foram retiradas de C: e os dois registros QA removidos. Todas as sete cópias permanecem em D:, incluindo as cinco cópias de recuperação, conferidas por SHA-256 antes da retirada. Perfis QA e backups de dados permaneceram em C:. Pacotes finais e HANNA pessoal preservados. Espaço recuperado medido nesta etapa: 878,776,320 bytes.
 
-Os três temporários autorizados foram transferidos para D: com hashes, recuperando 252.112.896 bytes. Sete cópias antigas de programa QA (770.996.750 bytes), incluindo cinco cópias de recuperação, foram integralmente copiadas e verificadas em D:. Continuam também em C:. A retirada adicional e os dois registros dos aplicativos QA foram bloqueados pela revisão automática por falta de autorização específica. A pergunta está pendente; nenhuma exclusão adicional foi executada. Perfis, backups de dados, pacotes finais e instalação pessoal intactos.
+C: 8,340,541,440 bytes livres; transação de 490,847,854 bytes; sobra calculada 7,849,693,586 bytes, acima da reserva intacta de 7,651,259,719 bytes — PASS. D: 22,539,821,056 bytes livres; backup requerido 5,933,133,342 bytes; sobra 16,606,687,714 bytes, acima da reserva de 8,589,934,592 bytes — PASS. O instalador reavalia esses valores antes da aplicação.
 
-PASS em D: para backup integral, preservando a reserva de 8.589.934.592 bytes. C: exige a reserva intacta de 7.651.259.719 bytes mais 490.847.854 bytes para a transação. Consulte OFFICIAL_STORAGE_READY.json para a medição, que o instalador repetirá antes da aplicação.
+A revisão automática inicialmente bloqueou a exclusão adicional; nenhuma proteção foi contornada. Após a autorização específica, a execução revisada foi permitida e concluída. A leitura física autorizada confirmou os dois registros ausentes; a vista restrita da ferramenta apresentou uma leitura divergente, preservada como limitação de ambiente, não como falha do instalador.
 
-## Como atualizar quando o espaço estiver liberado
+A instalação pessoal permanece 26.1.9 e não foi substituída. O próximo passo é o usuário executar o instalador e homologar fisicamente. Isso não autoriza importação nem ativação do Sync pessoal.
+
+## Como atualizar agora
 
 1. Salvar o instalador em D: e fechar a HANNA.
 2. Executar o Setup oficial, manter D:\HANNA como destino do backup e selecionar **Fazer backup e atualizar**. Não desinstalar a versão atual.
