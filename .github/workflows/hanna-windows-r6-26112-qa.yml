@@ -1,0 +1,114 @@
+name: HANNA Windows R6 26.1.12 - protected QA
+on:
+  push:
+    branches: ['qa/windows-r6-26.1.12-ci-20261124']
+    paths: ['.github/workflows/hanna-windows-r6-26112-qa.yml']
+permissions:
+  contents: read
+concurrency:
+  group: hanna-windows-r6-26112-qa
+  cancel-in-progress: false
+jobs:
+  windows-qa:
+    if: github.repository == 'Nrzxl/hanna-conquest-downloads' && github.ref == 'refs/heads/qa/windows-r6-26.1.12-ci-20261124' && github.event_name == 'push'
+    runs-on: windows-latest
+    timeout-minutes: 35
+    env:
+      HANNA_BUILD_AREA: ${{ github.workspace }}\next-build
+      HANNA_BUILD_BASE: ${{ github.workspace }}\next-build\base-26.1.11
+      SOURCE_SHA: 7bed67ef8a533a8c8661aae54efd665222580753
+    steps:
+      - name: Require protected read-only source credential
+        shell: pwsh
+        env:
+          SOURCE_TOKEN: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:SOURCE_TOKEN)) { throw 'BLOCKED: protected source-read secret unavailable' }
+          Write-Host 'Protected source-read credential present. Value is never printed.'
+      - name: Checkout immutable private Windows source
+        uses: actions/checkout@v4
+        with:
+          repository: Nrzxl/hanna-conquest-mobile
+          ref: 7bed67ef8a533a8c8661aae54efd665222580753
+          token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
+          persist-credentials: false
+          path: private
+      - name: Verify immutable source and obtain exact official base
+        shell: pwsh
+        run: |
+          if ((git -C private rev-parse HEAD).Trim() -ne $env:SOURCE_SHA) { throw 'Private source identity mismatch' }
+          New-Item -ItemType Directory -Path $env:HANNA_BUILD_AREA | Out-Null
+          $setup = Join-Path $env:HANNA_BUILD_AREA 'official-base.exe'
+          Invoke-WebRequest 'https://github.com/Nrzxl/hanna-conquest-downloads/releases/download/v26.1.11/HANNA_conquest_Setup_R6_26_1_11_x64.exe' -OutFile $setup
+          if ((Get-FileHash -LiteralPath $setup -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'd514747c8b2cebb61e6cb07148fdc48912b7bc74a63805fd0b6200d20ca06f1e') { throw 'Official 26.1.11 installer hash mismatch' }
+          $assembly = [Reflection.Assembly]::LoadFile($setup)
+          $inputStream = $assembly.GetManifestResourceStream('hanna.payload.zip')
+          $zip = Join-Path $env:HANNA_BUILD_AREA 'base_payload.zip'
+          $outputStream = [IO.File]::Create($zip)
+          $inputStream.CopyTo($outputStream); $outputStream.Dispose(); $inputStream.Dispose()
+          $reader = [IO.StreamReader]::new($assembly.GetManifestResourceStream('hanna.payload.sha256'))
+          $pin = $reader.ReadToEnd().Trim(); $reader.Dispose()
+          if ((Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $pin) { throw 'Official embedded payload hash mismatch' }
+      - name: Prepare verified base and source delta
+        shell: pwsh
+        run: |
+          python private/windows-sync-integration-qa/next_evolution/tools/prepare_ci.py *> "$env:RUNNER_TEMP/hanna-private-prepare.log"
+          if ($LASTEXITCODE -ne 0) { throw 'QA preparation failed; private log is not published' }
+      - name: Compile 26.1.12 candidate without promotion
+        shell: pwsh
+        run: |
+          & "$env:HANNA_BUILD_BASE\runtime\python.exe" -B private/windows-sync-integration-qa/next_evolution/tools/build_next.py *> "$env:RUNNER_TEMP/hanna-private-build.log"
+          if ($LASTEXITCODE -ne 0) { throw 'Candidate compilation failed; no source or private log is published' }
+      - name: Full synthetic regression
+        shell: pwsh
+        run: |
+          & "$env:HANNA_BUILD_BASE\runtime\python.exe" -B private/windows-sync-integration-qa/next_evolution/tools/run_regression.py *> "$env:RUNNER_TEMP/hanna-private-tests.log"
+          if ($LASTEXITCODE -ne 0) { throw 'Synthetic regression failed; sanitized totals will identify the failure count' }
+      - name: Real isolated Windows Setup, reapplication and rollback
+        shell: pwsh
+        run: |
+          & "$env:HANNA_BUILD_BASE\runtime\python.exe" -B private/windows-sync-integration-qa/next_evolution/tools/qa_installer.py *> "$env:RUNNER_TEMP/hanna-private-installer.log"
+          if ($LASTEXITCODE -ne 0) { throw 'Isolated installer gate failed; private source/profile/logs are not published' }
+      - name: Export only approved sanitized QA receipts
+        id: export_qa
+        if: always()
+        shell: pwsh
+        env:
+          JOB_RESULT: ${{ job.status }}
+        run: |
+          New-Item -ItemType Directory -Path public-qa -Force | Out-Null
+          $summary = [ordered]@{
+            version='26.1.12'; channel='candidate'; sourceCommit=$env:SOURCE_SHA;
+            ci="https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID";
+            status=$env:JOB_RESULT; deployment_verified=$false;
+            personalInstallAllowed=$false; personalSyncEnabled=$false;
+            REAL='NOT_RUN: no personally installed app is exercised by CI';
+            CLONE='isolated Windows installer with synthetic preservation profile';
+            SYNTHETIC='full regression counted separately';
+            publicContents='sanitized QA receipts only; installer and private source excluded';
+            release=$false; ota=$false; merge=$false
+          }
+          $summary | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath public-qa/QA_CI_STATUS.json -Encoding utf8
+          foreach ($name in @('BUILD.json','REGRESSION.json','INSTALLER_QA.json')) {
+            $path = Join-Path $env:HANNA_BUILD_AREA "reports/$name"
+            if (Test-Path -LiteralPath $path) {
+              $data = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+              $data | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath "public-qa/$name" -Encoding utf8
+            }
+          }
+          foreach ($file in Get-ChildItem -LiteralPath public-qa -File) {
+            if ($file.Extension -ne '.json') { throw 'Non-approved public artifact extension' }
+            $text = Get-Content -LiteralPath $file.FullName -Raw
+            if ($text -match 'sb_secret_|github_pat_|ghp_[A-Za-z0-9]{30}|eyJ[A-Za-z0-9_-]{30,}\.[A-Za-z0-9_-]{30,}|Bearer\s+[A-Za-z0-9_-]{20,}|(?i)[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}') { throw 'Public QA sanitization blocked' }
+          }
+          $manifest = [ordered]@{}
+          foreach ($file in Get-ChildItem -LiteralPath public-qa -File) { $manifest[$file.Name] = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant() }
+          $manifest | ConvertTo-Json | Set-Content -LiteralPath public-qa/SHA256.json -Encoding utf8
+      - name: Upload sanitized QA evidence only
+        if: always() && steps.export_qa.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: HANNA-R6-26.1.12-QA-SANITIZED
+          path: public-qa/
+          if-no-files-found: error
+          retention-days: 14
