@@ -40,7 +40,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Nrzxl/hanna-conquest-mobile
-          ref: 04d812eabedc726349f12d18b2f233662cc430e1
+          ref: 5db69c75908887cbbf5db13373d33f2023ac4f78
           token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
           persist-credentials: false
           path: source
@@ -64,12 +64,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C source rev-parse HEAD)" = "04d812eabedc726349f12d18b2f233662cc430e1"
+          test "$(git -C source rev-parse HEAD)" = "5db69c75908887cbbf5db13373d33f2023ac4f78"
           cd source
           test "$(git hash-object android/app/src/main/kotlin/com/example/hanna_conquest_app/MainActivity.kt)" = "d9f84d1183e70839b1e4088dde3f2a39036328c5"
           test "$(git hash-object android/app/build.gradle.kts)" = "e752dee2878fde7d51dfbf26717dd85280b7477c"
           test "$(git hash-object lib/localization/hanna_achievement_ptbr.dart)" = "fd2127999004962d72ca1adba54993a5df07349e"
-          test "$(git hash-object lib/localization/hanna_description_ptbr.dart)" = "2dffdce4f59fc0fa8555ec7d28dfd50150f6a9ef"
+          test "$(git hash-object lib/localization/hanna_description_ptbr.dart)" = "c4014cc766d2a77756db5ae8da099c1265c74a32"
           test "$(git hash-object lib/integrations/hanna_api.dart)" = "d3c06c628f880da68859de07bccd34d87535f243"
           test ! -e android/app/src/main/kotlin/com/example/hanna_conquest_app/HannaAchievementTranslationBridge.kt
           test ! -e lib/sync/hanna_sync_qa_gate3.dart
@@ -173,7 +173,7 @@ jobs:
           {
             echo 'HANNA 0.4.20/10363 — ORIGINAL SIGNED RELEASE CANDIDATE, NOT RELEASE/OTA'
             echo 'Recovered stable source base: cb283d82e2b650843fa49756ec93bc807ea60103'
-            echo 'Integrated source: 04d812eabedc726349f12d18b2f233662cc430e1'
+            echo 'Integrated source: 5db69c75908887cbbf5db13373d33f2023ac4f78'
             echo "CI: https://github.com/Nrzxl/hanna-conquest-downloads/actions/runs/$GITHUB_RUN_ID"
             echo 'Personal applicationId: com.example.hanna_conquest_app'
             echo 'Old signed baseline: 0.4.19 / 10362 / SHA256 73627e68b19928b1667f96793d6b459b9018affe90dc9c4b098f316ce6e45745'
