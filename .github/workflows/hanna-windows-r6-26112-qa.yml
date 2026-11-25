@@ -16,7 +16,7 @@ jobs:
     env:
       HANNA_BUILD_AREA: ${{ github.workspace }}\next-build
       HANNA_BUILD_BASE: ${{ github.workspace }}\next-build\base-26.1.11
-      SOURCE_SHA: 96bd5f7437d494f917af29cd20923b7292d74962
+      SOURCE_SHA: 5e7b574dc4157497f906d52388b2aa870b4a59e8
     steps:
       - name: Require protected read-only source credential
         shell: pwsh
@@ -29,7 +29,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Nrzxl/hanna-conquest-mobile
-          ref: 96bd5f7437d494f917af29cd20923b7292d74962
+          ref: 5e7b574dc4157497f906d52388b2aa870b4a59e8
           token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
           persist-credentials: false
           path: private
@@ -55,16 +55,25 @@ jobs:
           python private/windows-sync-integration-qa/next_evolution/tools/prepare_ci.py *> "$env:RUNNER_TEMP/hanna-private-prepare.log"
           if ($LASTEXITCODE -ne 0) { throw 'QA preparation failed; private log is not published' }
       - name: Compile 26.1.12 candidate without promotion
+        id: build_candidate
         shell: pwsh
         run: |
           & "$env:HANNA_BUILD_BASE\runtime\python.exe" -B private/windows-sync-integration-qa/next_evolution/tools/build_next.py *> "$env:RUNNER_TEMP/hanna-private-build.log"
           if ($LASTEXITCODE -ne 0) { throw 'Candidate compilation failed; no source or private log is published' }
+      - name: Prepare ephemeral CI display for unchanged UI matrix
+        id: desktop
+        shell: pwsh
+        run: |
+          & "$env:HANNA_BUILD_BASE\runtime\python.exe" -B private/windows-sync-integration-qa/next_evolution/tools/ci_desktop.py *> "$env:RUNNER_TEMP/hanna-private-desktop.log"
+          if ($LASTEXITCODE -ne 0) { throw 'CI desktop unavailable; no user display settings were changed' }
       - name: Full synthetic regression
+        if: "!cancelled() && steps.build_candidate.outcome == 'success'"
         shell: pwsh
         run: |
           & "$env:HANNA_BUILD_BASE\runtime\python.exe" -B private/windows-sync-integration-qa/next_evolution/tools/run_regression.py *> "$env:RUNNER_TEMP/hanna-private-tests.log"
           if ($LASTEXITCODE -ne 0) { throw 'Synthetic regression failed; sanitized totals will identify the failure count' }
       - name: Real isolated Windows Setup, reapplication and rollback
+        if: "!cancelled() && steps.build_candidate.outcome == 'success'"
         shell: pwsh
         run: |
           & "$env:HANNA_BUILD_BASE\runtime\python.exe" -B private/windows-sync-integration-qa/next_evolution/tools/qa_installer.py *> "$env:RUNNER_TEMP/hanna-private-installer.log"
@@ -89,13 +98,15 @@ jobs:
             release=$false; ota=$false; merge=$false
           }
           $summary | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath public-qa/QA_CI_STATUS.json -Encoding utf8
-          foreach ($name in @('PREPARATION.json','BUILD.json','REGRESSION.json','INSTALLER_QA.json')) {
+          foreach ($name in @('PREPARATION.json','BUILD.json','REGRESSION.json','INSTALLER_QA.json','DESKTOP.json')) {
             $path = Join-Path $env:HANNA_BUILD_AREA "reports/$name"
             if (Test-Path -LiteralPath $path) {
               $data = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
               $data | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath "public-qa/$name" -Encoding utf8
             }
           }
+          $localQa = 'private/windows-sync-integration-qa/next_evolution/reports/PUBLIC_LOCAL_QA.json'
+          if (Test-Path -LiteralPath $localQa) { Copy-Item -LiteralPath $localQa -Destination public-qa/LOCAL_QA_REPORTED.json }
           foreach ($file in Get-ChildItem -LiteralPath public-qa -File) {
             if ($file.Extension -ne '.json') { throw 'Non-approved public artifact extension' }
             $text = Get-Content -LiteralPath $file.FullName -Raw
