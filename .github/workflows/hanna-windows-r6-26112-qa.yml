@@ -16,7 +16,7 @@ jobs:
     env:
       HANNA_BUILD_AREA: ${{ github.workspace }}\next-build
       HANNA_BUILD_BASE: ${{ github.workspace }}\next-build\base-26.1.11
-      SOURCE_SHA: 539c79bb4bde41d174b2ab6a1bb003f41631b045
+      SOURCE_SHA: 96bd5f7437d494f917af29cd20923b7292d74962
     steps:
       - name: Require protected read-only source credential
         shell: pwsh
@@ -29,7 +29,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Nrzxl/hanna-conquest-mobile
-          ref: 539c79bb4bde41d174b2ab6a1bb003f41631b045
+          ref: 96bd5f7437d494f917af29cd20923b7292d74962
           token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
           persist-credentials: false
           path: private
