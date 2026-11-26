@@ -40,7 +40,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Nrzxl/hanna-conquest-mobile
-          ref: 79929894e02c17e3447e3f8f3dd4d57ce0c03d3c
+          ref: d880f98968a8c38853d8b15fb49e23944f4ecbf3
           token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
           persist-credentials: false
           path: source
@@ -64,7 +64,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C source rev-parse HEAD)" = "79929894e02c17e3447e3f8f3dd4d57ce0c03d3c"
+          test "$(git -C source rev-parse HEAD)" = "d880f98968a8c38853d8b15fb49e23944f4ecbf3"
           cd source
           test "$(git hash-object android/app/src/main/kotlin/com/example/hanna_conquest_app/MainActivity.kt)" = "d9f84d1183e70839b1e4088dde3f2a39036328c5"
           test "$(git hash-object android/app/build.gradle.kts)" = "e752dee2878fde7d51dfbf26717dd85280b7477c"
@@ -77,6 +77,8 @@ jobs:
           test "$(git hash-object lib/integrations/hanna_achievement_presentation.dart)" = "95fb66a9c7e91815a03810c19ac38c07727b950d"
           test "$(git hash-object lib/integrations/hanna_snapshot_io.dart)" = "822d1f2e2a5184ea498541b0a3debbf0769b3524"
           test "$(git hash-object lib/core/hanna_collections_repository.dart)" = "3a22d562fc89966639becda776f930e3d31f8f00"
+          test "$(git hash-object lib/integrations/hanna_connections_page.dart)" = "69a72c43c9008a4e52972da5974d3897c77dc093"
+          test "$(git hash-object lib/store/hanna_store_page.dart)" = "39b213133d3a2ffbedcd0e7319ff7a9fb0333c65"
           test ! -e android/app/src/main/kotlin/com/example/hanna_conquest_app/HannaAchievementTranslationBridge.kt
           test ! -e lib/sync/hanna_sync_qa_gate3.dart
           grep -q '^version: 0.4.22+10365$' pubspec.yaml
@@ -179,7 +181,7 @@ jobs:
           {
             echo 'HANNA 0.4.22/10365 — ORIGINAL SIGNED RELEASE CANDIDATE, NOT RELEASE/OTA'
             echo 'Recovered stable source base: cb283d82e2b650843fa49756ec93bc807ea60103'
-            echo 'Integrated source: 79929894e02c17e3447e3f8f3dd4d57ce0c03d3c'
+            echo 'Integrated source: d880f98968a8c38853d8b15fb49e23944f4ecbf3'
             echo "CI: https://github.com/Nrzxl/hanna-conquest-downloads/actions/runs/$GITHUB_RUN_ID"
             echo 'Personal applicationId: com.example.hanna_conquest_app'
             echo 'Old signed baseline: 0.4.21 / 10364 / SHA256 d9fc4ab2c33b2851789d762a3a18fc9b203e8cc3c53a406cc94e21c9ef58a79f'
