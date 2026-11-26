@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Nrzxl/hanna-conquest-mobile
-          ref: 66acdd4b7608cfe873a3c5b115c5f843fa145542
+          ref: 08b3fb2cec6a95de5d45eb53471e70a2956635be
           token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
           persist-credentials: false
           path: source
@@ -24,7 +24,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C source rev-parse HEAD)" = "66acdd4b7608cfe873a3c5b115c5f843fa145542"
+          test "$(git -C source rev-parse HEAD)" = "08b3fb2cec6a95de5d45eb53471e70a2956635be"
           grep -q '^version: 0.4.21+10364$' source/pubspec.yaml
           python3 - <<'PY'
           import json
