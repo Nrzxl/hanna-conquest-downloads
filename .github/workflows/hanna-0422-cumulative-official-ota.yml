@@ -43,7 +43,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Nrzxl/hanna-conquest-mobile
-          ref: d880f98968a8c38853d8b15fb49e23944f4ecbf3
+          ref: 6f42def96d85fc100d2d252e30e4820a7758063d
           token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
           persist-credentials: false
           path: source
@@ -67,7 +67,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C source rev-parse HEAD)" = "d880f98968a8c38853d8b15fb49e23944f4ecbf3"
+          test "$(git -C source rev-parse HEAD)" = "6f42def96d85fc100d2d252e30e4820a7758063d"
           cd source
           test "$(git hash-object android/app/src/main/kotlin/com/example/hanna_conquest_app/MainActivity.kt)" = "d9f84d1183e70839b1e4088dde3f2a39036328c5"
           test "$(git hash-object android/app/build.gradle.kts)" = "e752dee2878fde7d51dfbf26717dd85280b7477c"
@@ -193,7 +193,7 @@ jobs:
           {
             echo 'HANNA 0.4.22/10365 — ORIGINAL SIGNED RELEASE CANDIDATE, NOT RELEASE/OTA'
             echo 'Recovered stable source base: cb283d82e2b650843fa49756ec93bc807ea60103'
-            echo 'Integrated source: d880f98968a8c38853d8b15fb49e23944f4ecbf3'
+            echo 'Integrated source: 6f42def96d85fc100d2d252e30e4820a7758063d'
             echo "CI: https://github.com/Nrzxl/hanna-conquest-downloads/actions/runs/$GITHUB_RUN_ID"
             echo 'Personal applicationId: com.example.hanna_conquest_app'
             echo 'Old signed baseline: 0.4.21 / 10364 / SHA256 d9fc4ab2c33b2851789d762a3a18fc9b203e8cc3c53a406cc94e21c9ef58a79f'
