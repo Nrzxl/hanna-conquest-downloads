@@ -1,0 +1,55 @@
+name: HANNA Mobile UI Consistency - Static and Widget QA - NO OTA
+on:
+  push:
+    branches: [qa/hanna-ui-consistency-20261126]
+    paths:
+      - .github/workflows/hanna-ui-consistency-audit.yml
+permissions:
+  contents: read
+jobs:
+  visual-behavior-audit:
+    name: Full analyze, achievement and module widget tests - no release
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout immutable mobile UI audit source
+        uses: actions/checkout@v4
+        with:
+          repository: Nrzxl/hanna-conquest-mobile
+          ref: 66acdd4b7608cfe873a3c5b115c5f843fa145542
+          token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
+          persist-credentials: false
+          path: source
+      - name: Assert audit SHA, native identity and protected Sync
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C source rev-parse HEAD)" = "66acdd4b7608cfe873a3c5b115c5f843fa145542"
+          grep -q '^version: 0.4.21+10364$' source/pubspec.yaml
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          x=json.loads(Path('source/backend/public_client_config.json').read_text())
+          assert x['deployment_verified'] is False
+          print('Read-only UI audit, no personal Sync or APK release.')
+          PY
+      - name: Install Flutter 3.47.9
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.9'
+          cache: true
+      - name: Resolve Flutter packages
+        working-directory: source
+        run: flutter pub get
+      - name: Validate Dart and Flutter source
+        working-directory: source
+        run: flutter analyze
+      - name: Run comprehensive regression suite
+        working-directory: source
+        run: flutter test
+      - name: Explicit navigation and narrow viewport regression
+        working-directory: source
+        run: |
+          flutter test test/hanna_achievement_presentation_test.dart
+          flutter test test/hanna_collections_disconnected_ui_test.dart
