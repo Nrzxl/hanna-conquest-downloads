@@ -1,0 +1,63 @@
+name: HANNA Mobile Deep Audit - Static and Regression QA - NO OTA
+on:
+  push:
+    branches: [qa/hanna-deep-audit-20261126]
+    paths:
+      - .github/workflows/hanna-mobile-deep-audit.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hanna-mobile-deep-audit-only
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    name: Full Flutter analyze and all regression tests - no release
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Check out immutable HANNA Mobile audit source
+        uses: actions/checkout@v4
+        with:
+          repository: Nrzxl/hanna-conquest-mobile
+          ref: 956fd3c2bd1c26169a91251ae6565f7a03012374
+          token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
+          persist-credentials: false
+          path: source
+
+      - name: Confirm tested source and safe deployment scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C source rev-parse HEAD)" = "956fd3c2bd1c26169a91251ae6565f7a03012374"
+          test "$(git -C source hash-object source/android/app/src/main/kotlin/com/example/hanna_conquest_app/MainActivity.kt)" = "d9f84d1183e70839b1e4088dde3f2a39036328c5" || \
+            test "$(git -C source hash-object android/app/src/main/kotlin/com/example/hanna_conquest_app/MainActivity.kt)" = "d9f84d1183e70839b1e4088dde3f2a39036328c5"
+          grep -q '^version: 0.4.21+10364$' source/pubspec.yaml
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          cfg=json.loads(Path('source/backend/public_client_config.json').read_text())
+          assert cfg['deployment_verified'] is False
+          print('Sync personal remains protected. Audit has no release/OTA steps.')
+          PY
+
+      - name: Flutter 3.47.9
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.9'
+          cache: true
+
+      - name: Resolve dependencies
+        working-directory: source
+        run: flutter pub get
+
+      - name: Analyze every Dart source and test
+        working-directory: source
+        run: flutter analyze
+
+      - name: Run complete regression suite
+        working-directory: source
+        run: flutter test
