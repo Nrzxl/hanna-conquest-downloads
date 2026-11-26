@@ -1,0 +1,369 @@
+name: HANNA 0.4.22 - Complete Cumulative Hardcore Journey and UX Official Auto OTA
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/hanna-0422-cumulative-official-ota.yml
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: hanna-0422-cumulative-original-official-ota
+  cancel-in-progress: false
+
+jobs:
+  signed-validation:
+    name: Build and prove in-place upgrade compatibility
+    if: github.repository == 'Nrzxl/hanna-conquest-downloads' && github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 130
+    env:
+      ANDROID_I_WANT_MY_TCG: 'yes'
+    steps:
+      - name: Require original signing credentials
+        shell: bash
+        env:
+          SOURCE_TOKEN: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
+          KEYSTORE_B64: ${{ secrets.HANNA_KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.HANNA_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.HANNA_KEY_PASSWORD }}
+          STORE_PASSWORD: ${{ secrets.HANNA_STORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$SOURCE_TOKEN"
+          test -n "$KEYSTORE_B64"
+          test -n "$KEY_ALIAS"
+          test -n "$KEY_PASSWORD"
+          test -n "$STORE_PASSWORD"
+          echo 'Source and original signer secrets found in private CI. Values not printed.'
+
+      - name: Checkout immutable 0.4.21-derived description-only integration source
+        uses: actions/checkout@v4
+        with:
+          repository: Nrzxl/hanna-conquest-mobile
+          ref: 6f42def96d85fc100d2d252e30e4820a7758063d
+          token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
+          persist-credentials: false
+          path: source
+
+      - name: Java and Android SDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v4
+
+      - name: Set up Flutter 3.47.9
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.9'
+          cache: true
+
+      - name: Verify source, recovered native code and public-only Sync config
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C source rev-parse HEAD)" = "6f42def96d85fc100d2d252e30e4820a7758063d"
+          cd source
+          test "$(git hash-object android/app/src/main/kotlin/com/example/hanna_conquest_app/MainActivity.kt)" = "d9f84d1183e70839b1e4088dde3f2a39036328c5"
+          test "$(git hash-object android/app/build.gradle.kts)" = "e752dee2878fde7d51dfbf26717dd85280b7477c"
+          test "$(git hash-object lib/localization/hanna_achievement_ptbr.dart)" = "fd2127999004962d72ca1adba54993a5df07349e"
+          test "$(git hash-object lib/localization/hanna_description_ptbr.dart)" = "a790d02030b901f8857c9c9b012e2608506a43f5"
+          test "$(git hash-object lib/integrations/hanna_api.dart)" = "58f24a21b35bb3675526b678a77857d2db5e8898"
+          test "$(git hash-object lib/integrations/hanna_dashboard_page.dart)" = "5fa2df670401e41e9182748311ed96a27b97eb0a"
+          test "$(git hash-object lib/integrations/hanna_retro_discovery.dart)" = "0b560e680c1cf591841cbb04f313ca92a85f50de"
+          test "$(git hash-object lib/integrations/hanna_activity_view.dart)" = "dbadca5e2dbb1ac396072798452a4227425a11c8"
+          test "$(git hash-object lib/integrations/hanna_retro_premium.dart)" = "86ac4e1493ec8bdaf1aa46db3622d20174555d60"
+          test "$(git hash-object lib/integrations/hanna_smart_home.dart)" = "1e2e07052fcf48da27157136d0cb78403136b836"
+          test "$(git hash-object lib/integrations/hanna_smart_home_page.dart)" = "6464831572ba1ec5cb9b1ef8f243c77e09c8d023"
+          test "$(git hash-object lib/integrations/hanna_achievement_presentation.dart)" = "95fb66a9c7e91815a03810c19ac38c07727b950d"
+          test "$(git hash-object lib/integrations/hanna_snapshot_io.dart)" = "822d1f2e2a5184ea498541b0a3debbf0769b3524"
+          test "$(git hash-object lib/core/hanna_collections_repository.dart)" = "3a22d562fc89966639becda776f930e3d31f8f00"
+          test "$(git hash-object lib/integrations/hanna_connections_page.dart)" = "69a72c43c9008a4e52972da5974d3897c77dc093"
+          test "$(git hash-object lib/store/hanna_store_page.dart)" = "39b213133d3a2ffbedcd0e7319ff7a9fb0333c65"
+          test ! -e android/app/src/main/kotlin/com/example/hanna_conquest_app/HannaAchievementTranslationBridge.kt
+          test ! -e lib/sync/hanna_sync_qa_gate3.dart
+          grep -q '^version: 0.4.22+10365$' pubspec.yaml
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          cfg=json.loads(Path('backend/public_client_config.json').read_text())
+          assert cfg['url']=='https://wbkfrldzuasicmtmndvd.supabase.co'
+          assert cfg['deployment_verified'] is False
+          assert cfg['publishable_key'].startswith('sb_publishable_')
+          with open(os.environ['GITHUB_ENV'],'a') as f:
+              f.write('HANNA_QA_PUBLISHABLE='+cfg['publishable_key']+'\n')
+          print('QA scope verified. Personal data migration absent.')
+          PY
+
+      - name: Download and hash-verify official 0.4.21 signed baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 2 --max-time 180 \
+            'https://github.com/Nrzxl/hanna-conquest-downloads/releases/download/v0.4.21-b10364-preview/HANNA-conquest-0.4.21-ORIGINAL-HOMOLOGACAO.apk' \
+            -o "$RUNNER_TEMP/hanna-0421-original.apk"
+          echo 'd9fc4ab2c33b2851789d762a3a18fc9b203e8cc3c53a406cc94e21c9ef58a79f  '"$RUNNER_TEMP/hanna-0421-original.apk" | sha256sum -c -
+
+      - name: Prepare original signing key in runner temporary directory only
+        env:
+          KEYSTORE_B64: ${{ secrets.HANNA_KEYSTORE_BASE64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/hanna-original.jks"
+          test -s "$RUNNER_TEMP/hanna-original.jks"
+          chmod 600 "$RUNNER_TEMP/hanna-original.jks"
+          echo "HANNA_KEYSTORE_PATH=$RUNNER_TEMP/hanna-original.jks" >> "$GITHUB_ENV"
+
+      - name: Resolve dependencies and analyze
+        working-directory: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter pub get
+          flutter analyze
+
+      - name: Run all Flutter regressions
+        working-directory: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter test
+
+      - name: Build signed in-place cumulative 0.4.22 APK
+        working-directory: source
+        shell: bash
+        env:
+          HANNA_KEY_ALIAS: ${{ secrets.HANNA_KEY_ALIAS }}
+          HANNA_KEY_PASSWORD: ${{ secrets.HANNA_KEY_PASSWORD }}
+          HANNA_STORE_PASSWORD: ${{ secrets.HANNA_STORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          flutter build apk --release \
+            --build-name=0.4.22 --build-number=10365 \
+            --dart-define=HANNA_BUILD_VERSION=0.4.22 \
+            --dart-define=HANNA_BUILD_NUMBER=10365 \
+            --dart-define=HANNA_SYNC_SUPABASE_URL=https://wbkfrldzuasicmtmndvd.supabase.co \
+            --dart-define=HANNA_SYNC_SUPABASE_PUBLISHABLE_KEY="$HANNA_QA_PUBLISHABLE" \
+            --dart-define=HANNA_SYNC_EXPERIMENTAL_ENABLED=true \
+            --dart-define=HANNA_SYNC_MAIN_PREVIEW=true
+          test -s build/app/outputs/flutter-apk/app-release.apk
+          mkdir -p ../candidate
+          cp build/app/outputs/flutter-apk/app-release.apk ../candidate/HANNA-conquest-0.4.22-b10365-ORIGINAL-CANDIDATE.apk
+
+      - name: Verify both certificate and Android upgrade metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
+          SIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          test -x "$AAPT"
+          test -x "$SIGNER"
+          OLD="$RUNNER_TEMP/hanna-0421-original.apk"
+          NEW="candidate/HANNA-conquest-0.4.22-b10365-ORIGINAL-CANDIDATE.apk"
+          "$SIGNER" verify --print-certs "$OLD" > "$RUNNER_TEMP/signature-old.txt"
+          "$SIGNER" verify --print-certs "$NEW" > "$RUNNER_TEMP/signature-new.txt"
+          "$AAPT" dump badging "$OLD" > "$RUNNER_TEMP/package-old.txt"
+          "$AAPT" dump badging "$NEW" > "$RUNNER_TEMP/package-new.txt"
+          python3 - <<'PY'
+          import re,os
+          from pathlib import Path
+          p=Path(os.environ['RUNNER_TEMP'])
+          pat=re.compile(r'(?:Signer #1|V[123] Signer): certificate SHA-256 digest:\s*([0-9a-fA-F]{64})')
+          ids=[pat.search((p/f).read_text()) for f in ('signature-old.txt','signature-new.txt')]
+          if any(x is None for x in ids) or ids[0].group(1).lower()!=ids[1].group(1).lower():
+              raise SystemExit('ORIGINAL certificate mismatch — release blocked')
+          meta=re.compile(r"^package: name='([^']+)' versionCode='(\d+)' versionName='([^']+)'",re.M)
+          old,new=[meta.search((p/f).read_text()) for f in ('package-old.txt','package-new.txt')]
+          if not old or not new:
+              raise SystemExit('Cannot inspect package/version metadata')
+          if old.group(1)!='com.example.hanna_conquest_app' or new.group(1)!=old.group(1):
+              raise SystemExit('Main applicationId changed')
+          if old.group(2)!='10364' or new.group(2)!='10365' or new.group(3)!='0.4.22':
+              raise SystemExit('Incorrect upgrade version')
+          print('PASS: original signature / package / version 10364→10365')
+          PY
+          sha256sum "$NEW" > candidate/HANNA-conquest-0.4.22-b10365-ORIGINAL-CANDIDATE.apk.sha256
+          {
+            echo 'HANNA 0.4.22/10365 — ORIGINAL SIGNED RELEASE CANDIDATE, NOT RELEASE/OTA'
+            echo 'Recovered stable source base: cb283d82e2b650843fa49756ec93bc807ea60103'
+            echo 'Integrated source: 6f42def96d85fc100d2d252e30e4820a7758063d'
+            echo "CI: https://github.com/Nrzxl/hanna-conquest-downloads/actions/runs/$GITHUB_RUN_ID"
+            echo 'Personal applicationId: com.example.hanna_conquest_app'
+            echo 'Old signed baseline: 0.4.21 / 10364 / SHA256 d9fc4ab2c33b2851789d762a3a18fc9b203e8cc3c53a406cc94e21c9ef58a79f'
+            echo 'New candidate: 0.4.22 / 10365 / original certificate verified'
+            echo 'PT-BR diagnostic and readable achievements integrated; Sync personal migration NEVER enabled'
+            echo 'No ML Kit translation bridge; recovered native files unchanged'
+            echo 'deployment_verified=false; no release, no OTA, no main merge'
+            echo 'In-place physical user data retention: NOT_RUN'
+            echo 'E2E real Windows-Android main UI: NOT_RUN'
+            echo 'APK SHA256:'
+            sha256sum "$NEW"
+          } > candidate/QA_BUILD_PROVENANCE.txt
+
+      - name: Upload original-signed candidate as private workflow artifact only
+        uses: actions/upload-artifact@v4
+        with:
+          name: HANNA-0422-PTBR-Original-Signed-Candidate
+          path: candidate/
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+
+
+      - name: Stage verified official baseline for both Android upgrade gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp "$RUNNER_TEMP/hanna-0421-original.apk" old.apk
+          echo 'd9fc4ab2c33b2851789d762a3a18fc9b203e8cc3c53a406cc94e21c9ef58a79f  old.apk' | sha256sum -c -
+          sha256sum -c candidate/HANNA-conquest-0.4.22-b10365-ORIGINAL-CANDIDATE.apk.sha256
+
+      - name: Prepare upgrade-api29.sh as one Bash process
+        shell: bash
+        run: |
+          cat > upgrade-api29.sh <<'HANNA_SMOKE_SCRIPT'
+          set -euo pipefail
+          PKG=com.example.hanna_conquest_app
+          adb install old.apk
+          adb shell am start -W -n "$PKG/.MainActivity"
+          sleep 8
+          adb shell pidof "$PKG"
+          BEFORE="$(adb shell pm list packages -U "$PKG" | tr -d '\r')"
+          adb shell am force-stop "$PKG"
+          adb install -r candidate/HANNA-conquest-0.4.22-b10365-ORIGINAL-CANDIDATE.apk
+          AFTER="$(adb shell pm list packages -U "$PKG" | tr -d '\r')"
+          test "$BEFORE" = "$AFTER"
+          adb logcat -c
+          adb shell am start -W -n "$PKG/.MainActivity"
+          sleep 12
+          adb shell pidof "$PKG"
+          if adb logcat -d -v brief | grep -E 'FATAL EXCEPTION|Process: com.example.hanna_conquest_app.*has died'; then
+            echo 'Fatal error after in-place upgrade'
+            exit 1
+          fi
+          echo 'API29 PASS: old/new same Android UID, app process alive, no observed fatal log'
+          HANNA_SMOKE_SCRIPT
+      - name: Boot official 0.4.21, upgrade without uninstall, boot candidate API29
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          # TCG is much slower than KVM. An emulator boot is NOT app boot proof.
+          emulator-boot-timeout: 1200
+          cores: 2
+          script: bash upgrade-api29.sh
+
+      - name: Prepare upgrade-api35.sh as one Bash process
+        shell: bash
+        run: |
+          cat > upgrade-api35.sh <<'HANNA_SMOKE_SCRIPT'
+          set -euo pipefail
+          PKG=com.example.hanna_conquest_app
+          adb install old.apk
+          adb shell am start -W -n "$PKG/.MainActivity"
+          sleep 7
+          adb shell pidof "$PKG"
+          BEFORE="$(adb shell pm list packages -U "$PKG" | tr -d '\r')"
+          adb shell am force-stop "$PKG"
+          adb install -r candidate/HANNA-conquest-0.4.22-b10365-ORIGINAL-CANDIDATE.apk
+          AFTER="$(adb shell pm list packages -U "$PKG" | tr -d '\r')"
+          test "$BEFORE" = "$AFTER"
+          adb logcat -c
+          adb shell am start -W -n "$PKG/.MainActivity"
+          sleep 12
+          adb shell pidof "$PKG"
+          if adb logcat -d -v brief | grep -E 'FATAL EXCEPTION|Process: com.example.hanna_conquest_app.*has died'; then
+            echo 'Fatal exception observed'
+            exit 1
+          fi
+          echo 'API35 PASS: old/new same Android UID, process alive after upgrade'
+          HANNA_SMOKE_SCRIPT
+      - name: Boot, upgrade in place and restart on API35
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          # TCG is much slower than KVM. An emulator boot is NOT app boot proof.
+          emulator-boot-timeout: 1200
+          cores: 2
+          script: bash upgrade-api35.sh
+      - name: Publish signed APK as directly downloadable Android prerelease
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = "Nrzxl/hanna-conquest-downloads"
+          test "$GITHUB_REF" = "refs/heads/main"
+          TAG="v0.4.22-b10365-preview"
+          SRC="candidate/HANNA-conquest-0.4.22-b10365-ORIGINAL-CANDIDATE.apk"
+          OUT="$RUNNER_TEMP/HANNA-conquest-0.4.22-ORIGINAL-HOMOLOGACAO.apk"
+          test -s "$SRC"
+          cp "$SRC" "$OUT"
+          (cd "$RUNNER_TEMP" && sha256sum HANNA-conquest-0.4.22-ORIGINAL-HOMOLOGACAO.apk > HANNA-conquest-0.4.22-ORIGINAL-HOMOLOGACAO.sha256)
+          test "$(sha256sum "$OUT" | awk '{print $1}')" = "$(sha256sum "$SRC" | awk '{print $1}')"
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::Release already exists: refusing to overwrite."
+            exit 1
+          fi
+          gh release create "$TAG" "$OUT" "$RUNNER_TEMP/HANNA-conquest-0.4.22-ORIGINAL-HOMOLOGACAO.sha256" \
+            --repo "$GITHUB_REPOSITORY" --prerelease \
+            --title 'HANNA Mobile 0.4.22 - Original Signed' \
+            --notes 'HANNA 0.4.22: Hardcore em Continue sua jornada, contagens RA confiáveis, correções de Coleções, filtros, busca em tela cheia, estabilidade do cache, tradução de descrições, Loja e Conexões. Atualize por cima, sem desinstalar. Serviço de tradução pode ter limites e exigir internet. Preserva títulos, chaves, aplicativo instalado e HANNA Sync pessoal protegido. Atualize por cima sem desinstalar.'
+          echo 'Official signed prerelease and sidecar published only after Android API29/API35 gates.'
+
+  publish-ota:
+    name: Publish independently verified 0.4.22 to official HANNA updater
+    needs: signed-validation
+    if: ${{ needs.signed-validation.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      actions: read
+    concurrency:
+      group: hanna-ota-verified-promotion
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ github.token }}
+      HANNA_RELEASE_TAG: v0.4.22-b10365-preview
+      HANNA_SOURCE_RUN_ID: ${{ github.run_id }}
+      HANNA_RELEASE_NOTES: "HANNA 0.4.22: Hardcore em Continue sua jornada, filtros e busca corrigidos, coleções/contas/cache seguros, tradução de descrições, estados RA, Loja e Conexões consistentes. Atualização direta por cima sem desinstalar. Sync pessoal permanece protegido."
+    steps:
+      - name: Checkout official OTA verification script
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Prepare Android SDK for independent certificate check
+        uses: android-actions/setup-android@v4
+      - name: Independently verify original-signed release, SHA and source CI
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/hanna_ota_promote_verified.py
+      - name: Publish verified monotonic manifest to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          if git diff --quiet -- update.json; then
+            echo 'Official release was already promoted; no changes.'
+            exit 0
+          fi
+          git add update.json
+          git -c user.name='github-actions[bot]' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              commit -m 'release(android): auto-promote signed verified HANNA 0.4.22 OTA'
+          git push origin HEAD:main
+          echo 'HANNA in-app updater promoted automatically after original signing and emulator gates.'
