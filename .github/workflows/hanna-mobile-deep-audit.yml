@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Nrzxl/hanna-conquest-mobile
-          ref: 956fd3c2bd1c26169a91251ae6565f7a03012374
+          ref: f54ce0b76d286d16f9489d6e969d9ce16814d3a8
           token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
           persist-credentials: false
           path: source
@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C source rev-parse HEAD)" = "956fd3c2bd1c26169a91251ae6565f7a03012374"
+          test "$(git -C source rev-parse HEAD)" = "f54ce0b76d286d16f9489d6e969d9ce16814d3a8"
           test "$(git -C source hash-object source/android/app/src/main/kotlin/com/example/hanna_conquest_app/MainActivity.kt)" = "d9f84d1183e70839b1e4088dde3f2a39036328c5" || \
             test "$(git -C source hash-object android/app/src/main/kotlin/com/example/hanna_conquest_app/MainActivity.kt)" = "d9f84d1183e70839b1e4088dde3f2a39036328c5"
           grep -q '^version: 0.4.21+10364$' source/pubspec.yaml
