@@ -1,0 +1,48 @@
+name: HANNA 0.4.23 Clean Experience - source QA only
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/hanna-0423-clean-experience-qa.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: hanna-0423-clean-experience-source-qa
+  cancel-in-progress: true
+jobs:
+  validate:
+    if: github.repository == 'Nrzxl/hanna-conquest-downloads' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout immutable private candidate
+        uses: actions/checkout@v4
+        with:
+          repository: Nrzxl/hanna-conquest-mobile
+          ref: d8eaf027e58e0b44e40ae7aae3bee84f0bcc2487
+          token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
+          persist-credentials: false
+          path: source
+      - name: Verify exact source and protected Sync
+        working-directory: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 'd8eaf027e58e0b44e40ae7aae3bee84f0bcc2487'
+          grep -q '^version: 0.4.23+10366$' pubspec.yaml
+          python3 -c "import json; assert json.load(open('backend/public_client_config.json'))['deployment_verified'] is False"
+      - name: Install Flutter 3.47.9
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.9'
+          cache: true
+      - name: Resolve dependencies
+        working-directory: source
+        run: flutter pub get
+      - name: Analyze all Dart sources
+        working-directory: source
+        run: flutter analyze
+      - name: Run full regression suite
+        working-directory: source
+        run: flutter test
