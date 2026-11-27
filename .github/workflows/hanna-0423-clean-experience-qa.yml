@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Nrzxl/hanna-conquest-mobile
-          ref: 58cab17425bdf51027c73939f693fe97f22cb1f1
+          ref: 63f9d614a5e55cee3d8ea2b45b47af1bf91c8c01
           token: ${{ secrets.HANNA_SOURCE_READ_TOKEN }}
           persist-credentials: false
           path: source
@@ -28,7 +28,7 @@ jobs:
         working-directory: source
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = '58cab17425bdf51027c73939f693fe97f22cb1f1'
+          test "$(git rev-parse HEAD)" = '63f9d614a5e55cee3d8ea2b45b47af1bf91c8c01'
           grep -q '^version: 0.4.23+10366$' pubspec.yaml
           python3 -c "import json; assert json.load(open('backend/public_client_config.json'))['deployment_verified'] is False"
       - name: Install Flutter 3.47.9
